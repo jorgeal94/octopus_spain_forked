@@ -65,65 +65,50 @@ class OctopusIntelligentGo(DataUpdateCoordinator):
         await self.async_request_refresh()  # Refresca los datos tras la actualización
 
 class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
-    """Entidad para gestionar el estado de carga objetivo (SOC) en Octopus Intelligent Go."""
+    """Entidad para gestionar el SOC objetivo en Octopus Intelligent Go."""
     
-    def __init__(self, coordinator: OctopusIntelligentGo):
+    def __init__(self, coordinator: OctopusIntelligentGo, account: str):  # 🔹 Asegurar que `account` se recibe
         super().__init__(coordinator)
-        self._unique_id = f"octopus_target_soc_{coordinator._account_id}"
-        self._name = f"Octopus Target SOC ({coordinator._account_id})"
-        self._coordinator = coordinator
+        self._account = account  # 🔹 Guardar `account`
+        self._unique_id = f"octopus_target_soc_{account}"
+        self._name = f"Octopus Target SOC ({account})"
         self._current_option = None
         self._options = INTELLIGENT_SOC_OPTIONS
 
     @callback
     def _handle_coordinator_update(self):
         """Actualiza el estado cuando hay nuevos datos en el coordinador."""
-        self._current_option = str(self._coordinator.data.get("weekdayTargetSoc", 80))  # Default: 80%
+        prefs = self.coordinator.data.get(self._account, {}).get("vehicle_charging_prefs", {})
+        self._current_option = str(prefs.get("weekdayTargetSoc", 80))
         self.async_write_ha_state()
-
-    @property
-    def current_option(self) -> str:
-        return self._current_option
-
-    @property
-    def options(self) -> List[str]:
-        return self._options
 
     async def async_select_option(self, option: str) -> None:
         """Cambia el valor del SOC objetivo."""
-        await self._coordinator.set_target_soc(int(option))
+        await self.coordinator.set_target_soc(self._account, int(option))  # 🔹 Pasar `account`
         self._current_option = option
         self.async_write_ha_state()
+
 
 class OctopusIntelligentTargetTime(CoordinatorEntity, SelectEntity):
     """Entidad para gestionar la hora de carga objetivo en Octopus Intelligent Go."""
     
-    def __init__(self, coordinator: OctopusIntelligentGo):
+    def __init__(self, coordinator: OctopusIntelligentGo, account: str):  # 🔹 Asegurar que `account` se recibe
         super().__init__(coordinator)
-        self._unique_id = f"octopus_target_time_{coordinator._account_id}"
-        self._name = f"Octopus Target Time ({coordinator._account_id})"
-        self._coordinator = coordinator
+        self._account = account  # 🔹 Guardar `account`
+        self._unique_id = f"octopus_target_time_{account}"
+        self._name = f"Octopus Target Time ({account})"
         self._current_option = None
         self._options = INTELLIGENT_CHARGE_TIMES
 
     @callback
     def _handle_coordinator_update(self):
         """Actualiza el estado cuando hay nuevos datos en el coordinador."""
-        prefs = self._coordinator.data.get("vehicle_charging_prefs", {})
+        prefs = self.coordinator.data.get(self._account, {}).get("vehicle_charging_prefs", {})
         self._current_option = prefs.get("weekdayTargetTime", "08:00")
         self.async_write_ha_state()
 
-    @property
-    def current_option(self) -> str:
-        return self._current_option
-
-    @property
-    def options(self) -> List[str]:
-        return self._options
-
     async def async_select_option(self, option: str) -> None:
         """Cambia el valor de la hora objetivo de carga."""
-        await self._coordinator.set_target_time(option)
+        await self.coordinator.set_target_time(self._account, option)  # 🔹 Pasar `account`
         self._current_option = option
         self.async_write_ha_state()
-
