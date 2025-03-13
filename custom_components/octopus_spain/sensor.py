@@ -37,7 +37,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', coordinator, len(accounts) == 1))
         sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', coordinator, len(accounts) == 1))
         sensors.append(OctopusInvoice(account, coordinator, len(accounts) == 1))
-
+        sensors.append(OctopusKrakenflexDevice(account, coordinator, len(accounts) == 1))  # Nuevo sensor
+        
     async_add_entities(sensors)
 
 
@@ -120,6 +121,76 @@ class OctopusInvoice(CoordinatorEntity, SensorEntity):
             'Fin': data['end'],
             'Emitida': data['issued']
         }
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> StateType:
+        return self._state
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        return self._attrs
+
+class OctopusCoordinator(DataUpdateCoordinator):
+
+    def __init__(self, hass: HomeAssistant, email: str, password: str):
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Spain", update_interval=timedelta(hours=UPDATE_INTERVAL))
+        self._api = OctopusSpain(email, password)
+        self._data = {}
+
+    async def _async_update_data(self):
+        if await self._api.login():
+            self._data = {}
+            accounts = await self._api.accounts()
+            for account in accounts:
+                account_data = await self._api.account(account)
+                krakenflex_device = await self._api.registered_krakenflex_device(account)
+                self._data[account] = {
+                    **account_data,
+                    "krakenflex_device": krakenflex_device
+                }
+
+        return self._data
+
+
+class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
+
+    def __init__(self, account: str, coordinator, single: bool):
+        super().__init__(coordinator=coordinator)
+        self._account = account
+        self._state = None
+        self._attrs: Mapping[str, Any] = {}
+        self._attr_name = "Krakenflex Device" if single else f"Krakenflex Device ({account})"
+        self._attr_unique_id = f"krakenflex_device_{account}"
+        self.entity_description = SensorEntityDescription(
+            key=f"krakenflex_device_{account}",
+            icon="mdi:car-electric",
+            state_class=SensorStateClass.MEASUREMENT
+        )
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Actualiza el estado con los datos del dispositivo Krakenflex."""
+        device = self.coordinator.data[self._account].get("krakenflex_device", {})
+        if device:
+            self._state = device.get("status")
+            self._attrs = {
+                "krakenflexDeviceId": device.get("krakenflexDeviceId"),
+                "provider": device.get("provider"),
+                "vehicleMake": device.get("vehicleMake"),
+                "vehicleModel": device.get("vehicleModel"),
+                "vehicleBatterySizeInKwh": device.get("vehicleBatterySizeInKwh"),
+                "chargePointMake": device.get("chargePointMake"),
+                "chargePointModel": device.get("chargePointModel"),
+                "chargePointPowerInKw": device.get("chargePointPowerInKw"),
+                "suspended": device.get("suspended"),
+                "hasToken": device.get("hasToken"),
+                "createdAt": device.get("createdAt"),
+            }
         self.async_write_ha_state()
 
     @property
