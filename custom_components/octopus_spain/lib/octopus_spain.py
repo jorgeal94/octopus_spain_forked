@@ -135,4 +135,43 @@ class OctopusSpain:
 
         return response.get("data", {}).get("registeredKrakenflexDevice", None)
 
-    
+    async def get_vehicle_charging_preferences(self, account_id: str):
+        """Obtiene las preferencias de carga del vehículo desde la API GraphQL."""
+        query = """
+        query vehicleChargingPreferences($accountNumber: String!) {
+            vehicleChargingPreferences(accountNumber: $accountNumber) {
+              weekdayTargetTime,
+              weekdayTargetSoc,
+              weekendTargetTime,
+              weekendTargetSoc
+            }
+        }
+        """
+        variables = {"accountNumber": account_id}
+        response = await self.async_graphql_query(query, variables)
+        return response.get("data", {}).get("vehicleChargingPreferences", {})
+
+    async def set_target_soc(self, account_id: str, target_soc: int):
+        """Actualiza el SOC objetivo del vehículo en la API GraphQL."""
+        mutation = """
+        mutation setVehicleChargingPreferences($accountNumber: String!, $weekdayTargetSoc: Int!) {
+            setVehicleChargingPreferences(accountNumber: $accountNumber, weekdayTargetSoc: $weekdayTargetSoc) {
+                success
+            }
+        }
+        """
+        variables = {"accountNumber": account_id, "weekdayTargetSoc": target_soc}
+        await self.async_graphql_query(mutation, variables)
+
+    async def set_target_time(self, account_id: str, target_time: str):
+        """Actualiza la hora objetivo de carga del vehículo en la API GraphQL."""
+        mutation = """
+        mutation setVehicleChargingPreferences($accountNumber: String!, $weekdayTargetTime: String!) {
+            setVehicleChargingPreferences(accountNumber: $accountNumber, weekdayTargetTime: $weekdayTargetTime) {
+                success
+            }
+        }
+        """
+        variables = {"accountNumber": account_id, "weekdayTargetTime": target_time}
+        await self.async_graphql_query(mutation, variables)
+
