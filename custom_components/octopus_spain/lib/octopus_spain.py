@@ -154,43 +154,42 @@ class OctopusSpain:
         
         return response.get("data", {}).get("vehicleChargingPreferences", None)
 
-    # async def set_target_soc(self, account_id: str, target_soc: int):
-    #     """Actualiza el SOC objetivo del vehículo en la API GraphQL."""
-    #     mutation = """
-    #     mutation setVehicleChargingPreferences($accountNumber: String!, $weekdayTargetSoc: Int!) {
-    #         setVehicleChargingPreferences(accountNumber: $accountNumber, weekdayTargetSoc: $weekdayTargetSoc) {
-    #             success
-    #         }
-    #     }
-    #     """
-    #     variables = {"accountNumber": account_id, "weekdayTargetSoc": target_soc}
+    async def set_target_soc(self, account_id: str, target_soc: int):
+        """Actualiza el SOC objetivo del vehículo en la API GraphQL."""
+        mutation = """
+        mutation setVehicleChargingPreferences($accountNumber: String!, $weekdayTargetSoc: Int!) {
+            setVehicleChargingPreferences(accountNumber: $accountNumber, weekdayTargetSoc: $weekdayTargetSoc) {
+                success
+            }
+        }
+        """
+        variables = {"accountNumber": account_id, "weekdayTargetSoc": target_soc}
 
-    #     response = await self.async_graphql_query(mutation, variables)
+        client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers={"authorization": self._token})  # Añadir el token
+        response = await client.execute_async(mutation, variables)
 
-    #     # Verificar respuesta
-    #     success = response.get("data", {}).get("setVehicleChargingPreferences", {}).get("success", False)
-    #     if not success:
-    #         _LOGGER.error(f"Error al actualizar SOC objetivo: {response}")
-    #     return success
+        if "errors" in response:
+            return False
+        else:
+            return True
 
+    async def set_target_time(self, account_id: str, target_time: int):
+        """Actualiza el target_time objetivo del vehículo en la API GraphQL."""
+        mutation = """
+        mutation setVehicleChargingPreferences($accountNumber: String!, $weekdayTargetTime: String!) {
+             setVehicleChargingPreferences(accountNumber: $accountNumber, weekdayTargetTime: $weekdayTargetTime) {
+                 success
+             }
+         }
+        """
+        variables = {"accountNumber": account_id, "weekdayTargetTime": target_time}
 
-    # async def set_target_time(self, account_id: str, target_time: str):
-    #     """Actualiza la hora objetivo de carga del vehículo en la API GraphQL."""
-    #     mutation = """
-    #     mutation setVehicleChargingPreferences($accountNumber: String!, $weekdayTargetTime: String!) {
-    #         setVehicleChargingPreferences(accountNumber: $accountNumber, weekdayTargetTime: $weekdayTargetTime) {
-    #             success
-    #         }
-    #     }
-    #     """
-    #     variables = {"accountNumber": account_id, "weekdayTargetTime": target_time}
+        client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers={"authorization": self._token})  # Añadir el token
+        response = await client.execute_async(mutation, variables)
 
-    #     response = await self.async_graphql_query(mutation, variables)
-
-    #     # Verificar respuesta
-    #     success = response.get("data", {}).get("setVehicleChargingPreferences", {}).get("success", False)
-    #     if not success:
-    #         _LOGGER.error(f"Error al actualizar la hora objetivo: {response}")
-    #     return success
+        if "errors" in response:
+            return False
+        else:
+            return True
 
 
