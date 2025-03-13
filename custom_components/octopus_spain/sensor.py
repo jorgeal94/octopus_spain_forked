@@ -38,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', coordinator, len(accounts) == 1))
         sensors.append(OctopusInvoice(account, coordinator, len(accounts) == 1))
         sensors.append(OctopusKrakenflexDevice(account, coordinator, len(accounts) == 1))  # Nuevo sensor
-        
+
     async_add_entities(sensors)
 
 
@@ -165,8 +165,7 @@ class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
         self.entity_description = SensorEntityDescription(
             key=f"krakenflex_device_{account}",
             icon="mdi:car-electric",
-            state_class=SensorStateClass.MEASUREMENT
-        )
+        )  # Eliminamos `state_class=SensorStateClass.MEASUREMENT`
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -177,7 +176,7 @@ class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
         """Actualiza el estado con los datos del dispositivo Krakenflex."""
         device = self.coordinator.data[self._account].get("krakenflex_device", {})
         if device:
-            self._state = device.get("status")
+            self._state = device.get("status")  # Aquí puede ser un string como "Live"
             self._attrs = {
                 "krakenflexDeviceId": device.get("krakenflexDeviceId"),
                 "provider": device.get("provider"),
@@ -194,9 +193,11 @@ class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
         self.async_write_ha_state()
 
     @property
-    def native_value(self) -> StateType:
-        return self._state
+    def native_value(self) -> str | None:
+        """Devuelve el estado del dispositivo Krakenflex (como 'Live', 'Charging', etc.)."""
+        return self._state  # Es un string, por lo que no se puede forzar a float
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Devuelve atributos adicionales del dispositivo Krakenflex."""
         return self._attrs
