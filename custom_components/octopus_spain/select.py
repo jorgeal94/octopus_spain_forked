@@ -23,11 +23,11 @@ async def async_setup_entry(
     vehicle_coordinator = OctopusIntelligentGo(hass, email, password)
     await vehicle_coordinator.async_config_entry_first_refresh()
 
-    select_entities = []  # 🔹 Faltaba inicializar la lista
-
-    for account in vehicle_coordinator.data.keys():
+    select_entities = []
+    accounts = vehicle_coordinator.data.keys()
+    for account in accounts:
+        # Crear y agregar el selector de SOC para cada cuenta
         select_entities.append(OctopusIntelligentTargetSoc(vehicle_coordinator, account))
-        select_entities.append(OctopusIntelligentTargetTime(vehicle_coordinator, account))
 
     async_add_entities(select_entities)
         
@@ -53,62 +53,84 @@ class OctopusIntelligentGo(DataUpdateCoordinator):
 
         return self._data
     
+    async def set_target_soc(self, account_id: str, weekday_target_soc: int, weekend_target_soc: int, weekday_target_time: str, weekend_target_time: str):
+        """Actualiza las preferencias de carga del vehículo en la API."""
+        if await self._api.login():
+            accounts = await self._api.accounts()
+            for account in accounts:
+                if account == account_id:
+                    # Llamada a la API para actualizar las preferencias de carga
+                    success = await self._api.set_target_soc(
+                        account_id,
+                        weekday_target_soc,
+                        weekend_target_soc,
+                        weekday_target_time,
+                        weekend_target_time
+                    )
+                    if success:
+                        # Actualiza los datos internos del coordinador con las nuevas preferencias
+                        self._data[account_id]["vehicle_charging_prefs"] = {
+                            "weekdayTargetSoc": weekday_target_soc,
+                            "weekendTargetSoc": weekend_target_soc,
+                            "weekdayTargetTime": weekday_target_time,
+                            "weekendTargetTime": weekend_target_time
+                        }
+                        self.async_write_ha_state()
+                        return True
+        return False
 
-    async def set_target_soc(self, target_soc: int):
-        """Actualiza el SOC objetivo en la API."""
-        await self._api.set_target_soc(self._account_id, target_soc)
-        await self.async_request_refresh()  # Refresca los datos tras la actualización
-
-    async def set_target_time(self, target_time: str):
-        """Actualiza la hora de carga objetivo en la API."""
-        await self._api.set_target_time(self._account_id, target_time)
-        await self.async_request_refresh()  # Refresca los datos tras la actualización
 
 class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
-    """Entidad para gestionar el SOC objetivo en Octopus Intelligent Go."""
-    
-    def __init__(self, coordinator: OctopusIntelligentGo, account: str):  # 🔹 Asegurar que `account` se recibe
+    """Entidad para gestionar el estado de carga objetivo (SOC) en Octopus Intelligent Go."""
+
+    def __init__(self, coordinator: OctopusIntelligentGo, account_number: str):
         super().__init__(coordinator)
-        self._account = account  # 🔹 Guardar `account`
-        self._unique_id = f"octopus_target_soc_{account}"
-        self._name = f"Octopus Target SOC ({account})"
+        self._account_number = account_number
+        self._unique_id = f"octopus_target_soc_{account_number}"
+        self._name = f"Octopus Target SOC ({account_number})"
         self._current_option = None
-        self._options = INTELLIGENT_SOC_OPTIONS
+        self._options = INTELLIGENT_SOC_OPTIONS  # Define los valores posibles (e.g., 10%, 20%, ... 100%)
+        self._current_weekday_target_soc = None
+        self._current_weekend_target_soc = None
+        self._current_weekday_target_time = None
+        self._current_weekend_target_time = None
 
     @callback
     def _handle_coordinator_update(self):
         """Actualiza el estado cuando hay nuevos datos en el coordinador."""
-        prefs = self.coordinator.data.get(self._account, {}).get("vehicle_charging_prefs", {})
-        self._current_option = str(prefs.get("weekdayTargetSoc", 80))
+        preferences = self.coordinator.data.get(self._account_number, {}).get("vehicle_charging_prefs", {})
+        if preferences:
+            # Establecer el valor predeterminado con el valor actual del SOC objetivo
+            self._current_weekday_target_soc = str(preferences.get("weekdayTargetSoc", 80))  # Valor predeterminado: 80%
+            self._current_weekend_target_soc = str(preferences.get("weekendTargetSoc", 80))  # Valor predeterminado: 80%
+            self._current_weekday_target_time = preferences.get("weekdayTargetTime", "08:00")  # Valor predeterminado: "08:00"
+            self._current_weekend_target_time = preferences.get("weekendTargetTime", "08:00")  # Valor predeterminado: "08:00"
         self.async_write_ha_state()
+
+    @property
+    def current_option(self) -> str:
+        return self._current_weekday_target_soc
+
+    @property
+    def options(self) -> List[str]:
+        return self._options
 
     async def async_select_option(self, option: str) -> None:
         """Cambia el valor del SOC objetivo."""
-        await self.coordinator.set_target_soc(self._account, int(option))  # 🔹 Pasar `account`
-        self._current_option = option
-        self.async_write_ha_state()
+        # Llamar a la API para actualizar los valores de carga objetivo
+        weekday_target_soc = int(option)
+        weekend_target_soc = self._current_weekend_target_soc
+        weekday_target_time = self._current_weekday_target_time
+        weekend_target_time = self._current_weekend_target_time
 
+        success = await self.coordinator.set_target_soc(
+            self._account_number,
+            weekday_target_soc,
+            weekend_target_soc,
+            weekday_target_time,
+            weekend_target_time
+        )
 
-class OctopusIntelligentTargetTime(CoordinatorEntity, SelectEntity):
-    """Entidad para gestionar la hora de carga objetivo en Octopus Intelligent Go."""
-    
-    def __init__(self, coordinator: OctopusIntelligentGo, account: str):  # 🔹 Asegurar que `account` se recibe
-        super().__init__(coordinator)
-        self._account = account  # 🔹 Guardar `account`
-        self._unique_id = f"octopus_target_time_{account}"
-        self._name = f"Octopus Target Time ({account})"
-        self._current_option = None
-        self._options = INTELLIGENT_CHARGE_TIMES
-
-    @callback
-    def _handle_coordinator_update(self):
-        """Actualiza el estado cuando hay nuevos datos en el coordinador."""
-        prefs = self.coordinator.data.get(self._account, {}).get("vehicle_charging_prefs", {})
-        self._current_option = prefs.get("weekdayTargetTime", "08:00")
-        self.async_write_ha_state()
-
-    async def async_select_option(self, option: str) -> None:
-        """Cambia el valor de la hora objetivo de carga."""
-        await self.coordinator.set_target_time(self._account, option)  # 🔹 Pasar `account`
-        self._current_option = option
-        self.async_write_ha_state()
+        if success:
+            self._current_weekday_target_soc = option
+            self.async_write_ha_state()
