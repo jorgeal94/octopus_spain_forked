@@ -1,3 +1,4 @@
+# En DESARROLLO
 # Componente Octopus Spain para Home Assistant
 
 ## ¿Qué es Octopus Energy?
@@ -10,7 +11,7 @@ por los excedentes solares para reducir a 0€ la factura así como acumular par
 
 ## ¿Qué hace el componente Octopus Spain?
 
-Este componente conecta con tu cuenta de _Octopus Energy_ para obtener el estado actual de tu **Solar Wallet** 
+Este componente conecta con tu cuenta de _Octopus Energy_ para obtener el estado actual de tu **Solar Wallet** y **Dispositivos**
 así como los datos básicos de última factura.
 
 Este componente ha sido revisado por los ingenerios de _Octopus Energy_ y ha recibido su visto bueno.
