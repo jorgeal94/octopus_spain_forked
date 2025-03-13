@@ -4,6 +4,7 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from .octopus_intelligent_system import OctopusIntelligentSystem
 
 from .const import DOMAIN
 
