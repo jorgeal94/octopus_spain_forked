@@ -7,7 +7,35 @@ CONF_PASSWORD = 'password'
 
 UPDATE_INTERVAL = 1 # Hours
 
-INTELLIGENT_MINS_PAST_HOURS: Final = [0, 30]
-INTELLIGENT_24HR_TIMES: Final = [f"{hour:02}:{mins:02}" for hour in range(24) for mins in INTELLIGENT_MINS_PAST_HOURS]
-INTELLIGENT_CHARGE_TIMES: Final = [f"{hour:02}:{mins:02}" for hour in range(4, 12) for mins in INTELLIGENT_MINS_PAST_HOURS][:-1]
-INTELLIGENT_SOC_OPTIONS: Final = list(range(10, 105, 5))
+# Opciones para el Target State of Charge (SOC)
+INTELLIGENT_SOC_OPTIONS = [
+    "20",  # 20%
+    "30",  # 30%
+    "40",  # 40%
+    "50",  # 50%
+    "60",  # 60%
+    "70",  # 70%
+    "80",  # 80%
+    "90",  # 90%
+    "100"  # 100%
+]
+
+# Opciones para el Target Ready By Time (Hora de carga)
+INTELLIGENT_CHARGE_TIMES = [
+    "06:00",  # 6 AM
+    "07:00",  # 7 AM
+    "08:00",  # 8 AM
+    "09:00",  # 9 AM
+    "10:00",  # 10 AM
+    "11:00",  # 11 AM
+    "12:00",  # 12 PM
+    "13:00",  # 1 PM
+    "14:00",  # 2 PM
+    "15:00",  # 3 PM
+    "16:00",  # 4 PM
+    "17:00",  # 5 PM
+    "18:00",  # 6 PM
+    "19:00",  # 7 PM
+    "20:00",  # 8 PM
+    "21:00"   # 9 PM
+]
