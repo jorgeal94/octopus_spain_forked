@@ -38,6 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', coordinator, len(accounts) == 1))
         sensors.append(OctopusInvoice(account, coordinator, len(accounts) == 1))
         sensors.append(OctopusKrakenflexDevice(account, coordinator, len(accounts) == 1))  # Nuevo sensor
+        sensors.append(OctopusVehicleChargingPreferencesSensor(account, coordinator, single=False))
 
     async_add_entities(sensors)
 
@@ -145,9 +146,11 @@ class OctopusCoordinator(DataUpdateCoordinator):
             for account in accounts:
                 account_data = await self._api.account(account)
                 krakenflex_device = await self._api.registered_krakenflex_device(account)
+                vehicle_prefs = await self._api.get_vehicle_charging_preferences(account)
                 self._data[account] = {
                     **account_data,
-                    "krakenflex_device": krakenflex_device
+                    "krakenflex_device": krakenflex_device,
+                    "vehicle_charging_prefs": vehicle_prefs
                 }
 
         return self._data
@@ -200,4 +203,48 @@ class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
         """Devuelve atributos adicionales del dispositivo Krakenflex."""
+        return self._attrs
+
+class OctopusVehicleChargingPreferencesSensor(CoordinatorEntity, SensorEntity):
+
+    def __init__(self, account: str, coordinator, single: bool):
+        super().__init__(coordinator=coordinator)
+        self._account = account
+        self._state = None
+        self._attrs: Mapping[str, Any] = {}
+        self._attr_name = "Vehicle Charging Preferences" if single else f"Vehicle Charging ({account})"
+        self._attr_unique_id = f"vehicle_charging_prefs_{account}"
+        self.entity_description = SensorEntityDescription(
+            key=f"vehicle_charging_prefs_{account}",
+            icon="mdi:ev-station",
+        )
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Actualiza el estado con los datos de preferencias de carga del vehículo."""
+        prefs = self.coordinator.data[self._account].get("vehicle_charging_prefs", {})
+
+        if prefs:
+            self._state = prefs.get("weekdayTargetSoc")  # Valor por defecto: SOC entre semana
+            self._attrs = {
+                "weekday_target_time": prefs.get("weekdayTargetTime"),
+                "weekday_target_soc": prefs.get("weekdayTargetSoc"),
+                "weekend_target_time": prefs.get("weekendTargetTime"),
+                "weekend_target_soc": prefs.get("weekendTargetSoc"),
+            }
+
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> int | None:
+        """Devuelve el SOC objetivo entre semana."""
+        return self._state
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Devuelve atributos adicionales con más datos de carga."""
         return self._attrs
