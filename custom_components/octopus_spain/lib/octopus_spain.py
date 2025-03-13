@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 
 from python_graphql_client import GraphqlClient
-from gql import Client, gql
-from gql.transport.aiohttp import AIOHTTPTransport
+import aiohttp
 
 GRAPH_QL_ENDPOINT = "https://api.oees-kraken.energy/v1/graphql/"
 SOLAR_WALLET_LEDGER = "SOLAR_WALLET_LEDGER"
