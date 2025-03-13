@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from python_graphql_client import GraphqlClient
+from gql.transport.aiohttp import AIOHTTPTransport
 
 GRAPH_QL_ENDPOINT = "https://api.oees-kraken.energy/v1/graphql/"
 SOLAR_WALLET_LEDGER = "SOLAR_WALLET_LEDGER"
@@ -174,4 +175,17 @@ class OctopusSpain:
         """
         variables = {"accountNumber": account_id, "weekdayTargetTime": target_time}
         await self.async_graphql_query(mutation, variables)
+    
+    async def async_graphql_query(self, query: str, variables: dict):
+        """Realiza una consulta GraphQL a la API de Octopus Energy."""
+        url = "https://api.octopus.energy/v1/graphql"
+        headers = {
+            "Authorization": f"Bearer {self._token}",
+            "Content-Type": "application/json"
+        }
+        payload = {"query": query, "variables": variables}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, headers=headers) as response:
+                return await response.json()
 
