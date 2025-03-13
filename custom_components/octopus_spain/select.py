@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, CoordinatorEntity  # Asegúrate de tener esta importación
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.core import HomeAssistant, callback
