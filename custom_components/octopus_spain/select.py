@@ -20,19 +20,17 @@ async def async_setup_entry(
     email = entry.data["email"]
     password = entry.data["password"]
 
-    main_coordinator = OctopusCoordinator(hass, email, password)
-    await main_coordinator.async_config_entry_first_refresh()
+    vehicle_coordinator = OctopusIntelligentGo(hass, email, password)
+    await vehicle_coordinator.async_config_entry_first_refresh()
 
-    select_entities = []
-    for account in main_coordinator.data:
-        vehicle_coordinator = OctopusIntelligentGo(hass, main_coordinator._api, account)
-        await vehicle_coordinator.async_config_entry_first_refresh()
-        
-        select_entities.append(OctopusIntelligentTargetSoc(vehicle_coordinator))
-        select_entities.append(OctopusIntelligentTargetTime(vehicle_coordinator))
+    select_entities = []  # 🔹 Faltaba inicializar la lista
+
+    for account in vehicle_coordinator.data.keys():
+        select_entities.append(OctopusIntelligentTargetSoc(vehicle_coordinator, account))
+        select_entities.append(OctopusIntelligentTargetTime(vehicle_coordinator, account))
 
     async_add_entities(select_entities)
-
+        
 
 class OctopusIntelligentGo(DataUpdateCoordinator):
     """Coordinador específico para gestionar las preferencias de carga inteligente del vehículo."""
@@ -111,7 +109,8 @@ class OctopusIntelligentTargetTime(CoordinatorEntity, SelectEntity):
     @callback
     def _handle_coordinator_update(self):
         """Actualiza el estado cuando hay nuevos datos en el coordinador."""
-        self._current_option = self._coordinator.data.get("weekdayTargetTime", "08:00")  # Default: 08:00
+        prefs = self._coordinator.data.get("vehicle_charging_prefs", {})
+        self._current_option = prefs.get("weekdayTargetTime", "08:00")
         self.async_write_ha_state()
 
     @property
