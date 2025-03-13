@@ -31,33 +31,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     sensors = []
     coordinator = OctopusCoordinator(hass, email, password)
     await coordinator.async_config_entry_first_refresh()
+    intelligentcoordinator = OctopusIntelligentCoordinator(hass, email, password)
+    await intelligentcoordinator.async_config_entry_first_refresh()
 
     accounts = coordinator.data.keys()
     for account in accounts:
         sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', coordinator, len(accounts) == 1))
         sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', coordinator, len(accounts) == 1))
         sensors.append(OctopusInvoice(account, coordinator, len(accounts) == 1))
-        sensors.append(OctopusKrakenflexDevice(account, coordinator, len(accounts) == 1))  # Nuevo sensor
-        sensors.append(OctopusVehicleChargingPreferencesSensor(account, coordinator, single=False))
+        sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1))  # Nuevo sensor
+        sensors.append(OctopusVehicleChargingPreferencesSensor(account, intelligentcoordinator, single=False))
 
     async_add_entities(sensors)
 
 
-class OctopusCoordinator(DataUpdateCoordinator):
+# class OctopusCoordinator(DataUpdateCoordinator):
 
-    def __init__(self, hass: HomeAssistant, email: str, password: str):
-        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Spain", update_interval=timedelta(hours=UPDATE_INTERVAL))
-        self._api = OctopusSpain(email, password)
-        self._data = {}
+#     def __init__(self, hass: HomeAssistant, email: str, password: str):
+#         super().__init__(hass=hass, logger=_LOGGER, name="Octopus Spain", update_interval=timedelta(hours=UPDATE_INTERVAL))
+#         self._api = OctopusSpain(email, password)
+#         self._data = {}
 
-    async def _async_update_data(self):
-        if await self._api.login():
-            self._data = {}
-            accounts = await self._api.accounts()
-            for account in accounts:
-                self._data[account] = await self._api.account(account)
+#     async def _async_update_data(self):
+#         if await self._api.login():
+#             self._data = {}
+#             accounts = await self._api.accounts()
+#             for account in accounts:
+#                 self._data[account] = await self._api.account(account)
 
-        return self._data
+#         return self._data
 
 
 class OctopusWallet(CoordinatorEntity, SensorEntity):
@@ -149,12 +151,36 @@ class OctopusCoordinator(DataUpdateCoordinator):
                 vehicle_prefs = await self._api.get_vehicle_charging_preferences(account)
                 self._data[account] = {
                     **account_data,
+                    # "krakenflex_device": krakenflex_device,
+                    # "vehicle_charging_prefs": vehicle_prefs
+                }
+
+        return self._data
+
+####################################
+
+class OctopusIntelligentCoordinator(DataUpdateCoordinator):
+
+    def __init__(self, hass: HomeAssistant, email: str, password: str):
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=UPDATE_INTERVAL))
+        self._api = OctopusSpain(email, password)
+        self._data = {}
+
+    async def _async_update_data(self):
+        if await self._api.login():
+            self._data = {}
+            accounts = await self._api.accounts()
+            for account in accounts:
+                account_data = await self._api.account(account)
+                krakenflex_device = await self._api.registered_krakenflex_device(account)
+                vehicle_prefs = await self._api.get_vehicle_charging_preferences(account)
+                self._data[account] = {
+                    **account_data,
                     "krakenflex_device": krakenflex_device,
                     "vehicle_charging_prefs": vehicle_prefs
                 }
 
         return self._data
-
 
 class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
 
