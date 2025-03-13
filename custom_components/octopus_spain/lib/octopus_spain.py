@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from python_graphql_client import GraphqlClient
+from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
 GRAPH_QL_ENDPOINT = "https://api.oees-kraken.energy/v1/graphql/"
