@@ -33,9 +33,11 @@ async def async_setup_entry(
 
     async_add_entities(select_entities)
 
-class OctopusCoordinator(DataUpdateCoordinator):
+
+class OctopusIntelligentGo(DataUpdateCoordinator):
+    """Coordinador específico para gestionar las preferencias de carga inteligente del vehículo."""
     def __init__(self, hass: HomeAssistant, email: str, password: str):
-        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Spain", update_interval=timedelta(hours=1))
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=1))
         self._api = OctopusSpain(email, password)
         self._data = {}
 
@@ -44,27 +46,15 @@ class OctopusCoordinator(DataUpdateCoordinator):
             self._data = {}
             accounts = await self._api.accounts()
             for account in accounts:
-                account_data = await self._api.account(account)
                 krakenflex_device = await self._api.registered_krakenflex_device(account)
+                vehicle_prefs = await self._api.get_vehicle_charging_preferences(account)
                 self._data[account] = {
-                    **account_data,
-                    "krakenflex_device": krakenflex_device
+                    "krakenflex_device": krakenflex_device,
+                    "vehicle_charging_prefs": vehicle_prefs
                 }
+
         return self._data
-
-class OctopusIntelligentGo(DataUpdateCoordinator):
-    """Coordinador específico para gestionar las preferencias de carga inteligente del vehículo."""
     
-    def __init__(self, hass: HomeAssistant, api: OctopusSpain, account_id: str):
-        """Inicializa el coordinador."""
-        super().__init__(hass, _LOGGER, name=f"Octopus Intelligent Go ({account_id})", update_interval=timedelta(minutes=1))
-        self._api = api
-        self._account_id = account_id
-        self._data = {}
-
-    async def _async_update_data(self):
-        """Obtiene las preferencias de carga desde la API GraphQL."""
-        return await self._api.get_vehicle_charging_preferences(self._account_id)
 
     async def set_target_soc(self, target_soc: int):
         """Actualiza el SOC objetivo en la API."""
