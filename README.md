@@ -3,6 +3,8 @@
 
 ## ¿Qué es Octopus Energy?
 
+https://api.oees-kraken.energy/
+
 [Octopus Energy](https://octopusenergy.es/) es una comercializadora eléctrica española.
 
 Entre otras ventajas, dispone de la **Solar Wallet**, un servicio que permite acumular crédito obtenido
