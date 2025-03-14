@@ -76,7 +76,7 @@ class OctopusIntelligentGo(DataUpdateCoordinator):
                             "weekdayTargetTime": weekday_target_time,
                             "weekendTargetTime": weekend_target_time
                         }
-                        self.async_write_ha_state()
+                        self.async_set_updated_data(self._data)
                         return True
         return False
 
@@ -154,4 +154,4 @@ class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
 
         if success:
             self._current_weekday_target_soc = option
-            self.async_write_ha_state()
+            self.async_set_updated_data(self._data)
