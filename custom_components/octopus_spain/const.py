@@ -41,6 +41,5 @@ INTELLIGENT_CHARGE_TIMES = [
 ]
 
 # Días de la semana (se utilizan para iterar sobre ellos)
-DAYS_OF_WEEK = [
-    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
-]
+DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
