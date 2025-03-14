@@ -1,42 +1,45 @@
-from homeassistant import config_entries
+import logging
 import voluptuous as vol
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
-from .octopus_spain import OctopusSpain  # Importar la clase que maneja la autenticación
+from homeassistant import config_entries
+from homeassistant.core import HomeAssistant
+from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
+from .octopus_spain import OctopusSpain
 
-class OctopusSpainConfigFlow(config_entries.ConfigFlow):
-    """Maneja el flujo de configuración para Octopus Spain."""
+_LOGGER = logging.getLogger(__name__)
 
-    VERSION = 1
+class OctopusSpainConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Maneja el flujo de configuración de la integración Octopus Spain."""
 
     async def async_step_user(self, user_input=None):
-        """Paso de configuración de usuario."""
-        if user_input is not None:
-            # Aquí procesas los datos de entrada del usuario, como el email y contraseña
-            email = user_input[CONF_EMAIL]
-            password = user_input[CONF_PASSWORD]
-            
-            # Aquí se haría la validación de la cuenta de OctopusSpain
-            octopus_spain = OctopusSpain(email, password)
-            login_successful = await octopus_spain.login()  # Suponiendo que tienes un método `login`
+        """Controla el paso inicial del flujo de configuración."""
+        if user_input is None:
+            return self.async_show_form(step_id="user", data_schema=self._get_data_schema())
 
-            if login_successful:
-                return self.async_create_entry(
-                    title="Octopus Spain",
-                    data={CONF_EMAIL: email, CONF_PASSWORD: password}
-                )
-            else:
-                return self.async_show_form(
-                    step_id="user", errors={"base": "invalid_credentials"}
-                )
+        email = user_input[CONF_EMAIL]
+        password = user_input[CONF_PASSWORD]
 
-        # Si no hay entrada de usuario, muestra el formulario de configuración
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema({
-                vol.Required(CONF_EMAIL): str,
-                vol.Required(CONF_PASSWORD): str,
-            }),
+        # Aquí validamos las credenciales mediante la API de OctopusSpain
+        octopus_spain = OctopusSpain(email, password)
+        if not await octopus_spain.login():
+            return self.async_show_form(
+                step_id="user",
+                errors={"base": "invalid_credentials"},
+                data_schema=self._get_data_schema(),
+            )
+
+        # Si las credenciales son correctas, guardamos la configuración
+        return self.async_create_entry(
+            title=f"Octopus Spain {email}",
+            data=user_input
         )
+
+    def _get_data_schema(self):
+        """Devuelve el esquema de datos para el formulario de configuración."""
+        return vol.Schema({
+            vol.Required(CONF_EMAIL): str,
+            vol.Required(CONF_PASSWORD): str,
+        })
+
 
 
 # from __future__ import annotations
