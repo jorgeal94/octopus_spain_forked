@@ -88,13 +88,17 @@ class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
         super().__init__(coordinator)
         self._account_number = account_number
         self._unique_id = f"octopus_target_soc_{account_number}"
-        self._name = f"Octopus Target SOC ({account_number})"
-        self._current_option = None
+        self._name = f"Octopus Target SOC Semanal ({account_number})"
         self._options = INTELLIGENT_SOC_OPTIONS  # Define los valores posibles (e.g., 10%, 20%, ... 100%)
-        self._current_weekday_target_soc = None
-        self._current_weekend_target_soc = None
-        self._current_weekday_target_time = None
-        self._current_weekend_target_time = None
+         # Cargar valores iniciales
+        preferences = self.coordinator.data.get(self._account_number, {}).get("vehicle_charging_prefs", {})
+        self._current_weekday_target_soc = str(preferences.get("weekdayTargetSoc", 80))  # Valor predeterminado: 80%
+        self._current_weekend_target_soc = str(preferences.get("weekendTargetSoc", 80))  # Valor predeterminado: 80%
+        self._current_weekday_target_time = preferences.get("weekdayTargetTime", "08:00")  # Valor predeterminado: "08:00"
+        self._current_weekend_target_time = preferences.get("weekendTargetTime", "08:00")  # Valor predeterminado: "08:00"
+
+        self._current_option = self._current_weekday_target_soc  # Se inicializa con el SOC entre semana
+        self.async_write_ha_state()
 
     @property
     def name(self) -> str:
