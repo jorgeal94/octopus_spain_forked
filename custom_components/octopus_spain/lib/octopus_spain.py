@@ -192,4 +192,50 @@ class OctopusSpain:
     
         return True
     
+    async def set_device_preferences(self, account_id: str, device_id: str, mode: str, schedules: list, unit: str):
+        """Configura las preferencias del dispositivo con la nueva mutación GraphQL."""
+        if not self.token:
+            if not await self.login():
+                return False
+
+        url = "https://api.octopus.energy/v1/graphql"
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json"
+        }
+
+        mutation = """
+        mutation SetDevicePreferences($deviceId: String!, $mode: String!, $schedules: [ScheduleInput!]!, $unit: String!) {
+          setDevicePreferences(
+            input: {deviceId: $deviceId, mode: $mode, schedules: $schedules, unit: $unit}
+          ) {
+            id
+            ... on SmartFlexVehicle {
+              id
+              model
+              make
+              status
+            }
+          }
+        }
+        """
+
+        variables = {
+            "deviceId": device_id,
+            "mode": mode,
+            "schedules": schedules,
+            "unit": unit
+        }
+
+        payload = {
+            "query": mutation,
+            "variables": variables
+        }
+
+        async with self.session.post(url, json=payload, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                return "data" in data and data["data"].get("setDevicePreferences") is not None
+        return False
+    
     
