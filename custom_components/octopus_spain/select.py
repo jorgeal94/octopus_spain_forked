@@ -60,7 +60,7 @@ class OctopusIntelligentGo(DataUpdateCoordinator):
             for account in accounts:
                 if account == account_id:
                     # Llamada a la API para actualizar las preferencias de carga
-                    success = await self._api.set_target_soc(
+                    success = await self._api.set_targets(
                         account_id,
                         weekday_target_soc,
                         weekend_target_soc,

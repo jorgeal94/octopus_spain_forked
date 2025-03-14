@@ -156,7 +156,7 @@ class OctopusSpain:
         
         return response.get("data", {}).get("vehicleChargingPreferences", None)
 
-    async def set_target_soc(self, account_id: str, weekday_target_soc: int, weekend_target_soc: int, weekday_target_time: str, weekend_target_time: str):
+    async def set_targets(self, account_id: str, weekday_target_soc: int, weekend_target_soc: int, weekday_target_time: str, weekend_target_time: str):
         """Actualiza las preferencias de carga del vehículo en la API GraphQL."""
         mutation = """
         mutation setVehicleChargePreferences($accountNumber: String!, $weekdayTargetTime: String!, $weekdayTargetSoc: Int!, $weekendTargetTime: String!, $weekendTargetSoc: Int!) {
