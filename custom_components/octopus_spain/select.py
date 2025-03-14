@@ -154,4 +154,4 @@ class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
 
         if success:
             self._current_weekday_target_soc = option
-            self.async_set_updated_data(self._data)
+            self.async_write_ha_state() 
