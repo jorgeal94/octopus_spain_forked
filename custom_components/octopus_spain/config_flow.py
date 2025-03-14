@@ -16,7 +16,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import *
-from .lib.octopus_spain import OctopusSpain
+from .octopus_spain import OctopusSpain
 
 _LOGGER = logging.getLogger(__name__)
 
