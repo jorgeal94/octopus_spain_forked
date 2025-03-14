@@ -91,14 +91,8 @@
 #         else:
 #             return self.async_show_form(step_id="init", data_schema=SCHEMA, errors={'base': 'invalid_auth'})
 
-from __future__ import annotations
-
-import logging
-from typing import Any
-
-import voluptuous as vol
-
 from homeassistant import config_entries
+import voluptuous as vol
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from .octopus_spain import OctopusSpain  # Importa tu clase OctopusSpain
 
