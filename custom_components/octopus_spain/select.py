@@ -90,16 +90,27 @@ class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
         self._unique_id = f"octopus_target_soc_{account_number}"
         self._name = f"Octopus Target SOC Semanal ({account_number})"
         self._options = INTELLIGENT_SOC_OPTIONS  # Define los valores posibles (e.g., 10%, 20%, ... 100%)
-         # Cargar valores iniciales
+        # Inicializar valores en None hasta que la entidad esté lista
+        self._current_weekday_target_soc = None
+        self._current_weekend_target_soc = None
+        self._current_weekday_target_time = None
+        self._current_weekend_target_time = None
+        self._current_option = None
+
+    async def async_added_to_hass(self):
+        """Se ejecuta cuando la entidad ha sido agregada a Home Assistant."""
+        await super().async_added_to_hass()
+
+        # Cargar valores iniciales después de que Home Assistant ha registrado la entidad
         preferences = self.coordinator.data.get(self._account_number, {}).get("vehicle_charging_prefs", {})
-        self._current_weekday_target_soc = str(preferences.get("weekdayTargetSoc", 80))  # Valor predeterminado: 80%
-        self._current_weekend_target_soc = str(preferences.get("weekendTargetSoc", 80))  # Valor predeterminado: 80%
-        self._current_weekday_target_time = preferences.get("weekdayTargetTime", "08:00")  # Valor predeterminado: "08:00"
-        self._current_weekend_target_time = preferences.get("weekendTargetTime", "08:00")  # Valor predeterminado: "08:00"
+        self._current_weekday_target_soc = str(preferences.get("weekdayTargetSoc", 80))  # Predeterminado: 80%
+        self._current_weekend_target_soc = str(preferences.get("weekendTargetSoc", 80))
+        self._current_weekday_target_time = preferences.get("weekdayTargetTime", "08:00")
+        self._current_weekend_target_time = preferences.get("weekendTargetTime", "08:00")
 
         self._current_option = self._current_weekday_target_soc  # Se inicializa con el SOC entre semana
         self.async_write_ha_state()
-
+        
     @property
     def name(self) -> str:
         """Devuelve el nombre de la entidad."""
