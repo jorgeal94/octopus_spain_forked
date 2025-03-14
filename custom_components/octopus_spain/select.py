@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant, callback
 from .const import INTELLIGENT_SOC_OPTIONS, INTELLIGENT_CHARGE_TIMES
 from .lib.octopus_spain import OctopusSpain
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity import DeviceInfo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -95,6 +96,26 @@ class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
         self._current_weekday_target_time = None
         self._current_weekend_target_time = None
 
+    @property
+    def name(self) -> str:
+        """Devuelve el nombre de la entidad."""
+        return self._name
+
+    @property
+    def unique_id(self) -> str:
+        """Devuelve un identificador único para la entidad."""
+        return self._unique_id
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Devuelve la información del dispositivo al que pertenece la entidad."""
+        return DeviceInfo(
+            identifiers={(self._account_number,)},
+            name=f"Octopus Account {self._account_number}",
+            manufacturer="Octopus Energy",
+            model="Intelligent Go",
+        )
+    
     @callback
     def _handle_coordinator_update(self):
         """Actualiza el estado cuando hay nuevos datos en el coordinador."""
