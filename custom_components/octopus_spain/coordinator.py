@@ -19,33 +19,58 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         _LOGGER.info("🔄 Ejecutando `_async_update_data()`")
-    
+
         if await self._api.login():
             _LOGGER.info("🔑 Login exitoso en OctopusSpain")
             self._data = {}
             accounts = await self._api.accounts()
             _LOGGER.info(f"📂 Cuentas obtenidas: {accounts}")
-    
+
             for account in accounts:
                 account_data = await self._api.account(account)
                 _LOGGER.info(f"📋 Datos de la cuenta {account}: {account_data}")
-    
+
                 if not hasattr(self._api, "registered_krakenflex_device"):
                     _LOGGER.error(f"❌ `registered_krakenflex_device` no existe en `OctopusSpain`")
                     krakenflex_device = None
                 else:
                     krakenflex_device = await self._api.registered_krakenflex_device(account)
                     _LOGGER.info(f"✅ Datos del Krakenflex Device: {krakenflex_device}")
-    
+
                 self._data[account] = {
                     **account_data,
                     "krakenflex_device": krakenflex_device,
                 }
-    
+
             _LOGGER.info(f"📊 Datos obtenidos y almacenados: {self._data}")
-    
+
         return self._data
-    
+
+###Esto revisarlo bien que esta mal
+class OctopusWalletCoordinator(DataUpdateCoordinator):
+    """Coordinador para el sensor Octopus Wallet."""
+
+    def __init__(self, hass: HomeAssistant, email: str, password: str):
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=UPDATE_INTERVAL))
+        self._api = OctopusSpain(email, password)
+        self._data = {}
+
+    async def _async_update_data(self):
+        _LOGGER.info("🔄 Ejecutando `_async_update_data()`")
+
+        if await self._api.login():
+            _LOGGER.info("🔑 Login exitoso en OctopusSpain")
+            self._data = {}
+            accounts = await self._api.accounts()
+            _LOGGER.info(f"📂 Cuentas obtenidas: {accounts}")
+
+            for account in accounts:
+                account_data = await self._api.account(account)
+                _LOGGER.info(f"📋 Datos de la cuenta {account}: {account_data}")
+
+        return self._data
+
+  
 # class OctopusIntelligentCoordinator(DataUpdateCoordinator):
 #     """Gestor de datos centralizado para la integración de Octopus Spain."""
 
