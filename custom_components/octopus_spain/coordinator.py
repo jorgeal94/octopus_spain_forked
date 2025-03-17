@@ -9,12 +9,12 @@ from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
 
 _LOGGER = logging.getLogger(__name__)
 
-UPDATE_INTERVAL = 1  # Se actualizará cada 5 minutos
+UPDATE_INTERVAL = timedelta(minutes=1)  # Se actualizará cada 5 minutos
 
 class OctopusIntelligentCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, email: str, password: str):
-        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=UPDATE_INTERVAL))
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=UPDATE_INTERVAL)
         self._api = OctopusSpain(email, password)
         self._data = {}
 
