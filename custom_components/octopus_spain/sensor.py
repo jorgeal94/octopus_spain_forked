@@ -62,8 +62,8 @@ class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
         self._account = account
         self._state = None
         self._attrs: Mapping[str, Any] = {}
-        self._attr_name = "Krakenflex Device" if single else f"Krakenflex Device ({account})"
-        self._attr_unique_id = f"krakenflex_device_{account}"
+        self._attr_name = "Dispositivo Octopus" if single else f"Dispositivo Octopus ({account})"
+        self._attr_unique_id = f"Octopus_device_{account}"
         self.entity_description = SensorEntityDescription(
             key=f"krakenflex_device_{account}",
             icon="mdi:car-electric",
