@@ -289,7 +289,17 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_entities):
     """Configura los sensores de la integración."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    account_number = entry.data["account_number"]  # Asegúrate de tener el número de cuenta
+    
+    """Configura los sensores de la integración."""
+    _LOGGER.info(f"Datos de la entrada: {entry.data}")
+
+    # Intenta obtener el número de cuenta de la entrada de configuración
+    account_number = entry.data.get("account_number")
+    if not account_number:
+        _LOGGER.error("No se encontró account_number en los datos de la entrada")
+        return
+    else:
+        _LOGGER.info(f"account_number encontrado: {account_number}")
     
     try:
         devices = await coordinator.async_get_devices(account_number)
