@@ -5,16 +5,15 @@ from datetime import timedelta
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from .octopus_spain import OctopusSpain
-from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
+from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
-UPDATE_INTERVAL = timedelta(minutes=1)  # Se actualizará cada 5 minutos
 
 class OctopusIntelligentCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, email: str, password: str):
-        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=UPDATE_INTERVAL)
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=UPDATE_INTERVAL))
         self._api = OctopusSpain(email, password)
         self._data = {}
 
@@ -24,11 +23,13 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
             accounts = await self._api.accounts()
             for account in accounts:
                 account_data = await self._api.account(account)
+                # 🔍 Verificar si el objeto tiene el método
+                if not hasattr(self._api, "registered_krakenflex_device"):
+                    _LOGGER.error(f"❌ ERROR: `registered_krakenflex_device` NO existe en `OctopusSpain`")
+                else:
+                    _LOGGER.info(f"✅ `registered_krakenflex_device` existe en `OctopusSpain`")
+
                 krakenflex_device = await self._api.registered_krakenflex_device(account)
-                self._data[account] = {
-                    **account_data,
-                    "krakenflex_device": krakenflex_device,
-                }
 
         return self._data
     
