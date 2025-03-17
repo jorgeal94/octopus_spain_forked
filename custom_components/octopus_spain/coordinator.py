@@ -18,28 +18,32 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
         self._data = {}
 
     async def _async_update_data(self):
+        _LOGGER.info("🔄 Ejecutando `_async_update_data()`")
+    
         if await self._api.login():
+            _LOGGER.info("🔑 Login exitoso en OctopusSpain")
             self._data = {}
             accounts = await self._api.accounts()
+            _LOGGER.info(f"📂 Cuentas obtenidas: {accounts}")
+    
             for account in accounts:
                 account_data = await self._api.account(account)
-
-                # 🔍 Verificar si el objeto tiene el método
+                _LOGGER.info(f"📋 Datos de la cuenta {account}: {account_data}")
+    
                 if not hasattr(self._api, "registered_krakenflex_device"):
-                    _LOGGER.error(f"❌ ERROR: `registered_krakenflex_device` NO existe en `OctopusSpain`")
-                    krakenflex_device = None  # ⚠️ Evita fallos si el método no existe
+                    _LOGGER.error(f"❌ `registered_krakenflex_device` no existe en `OctopusSpain`")
+                    krakenflex_device = None
                 else:
-                    _LOGGER.info(f"✅ `registered_krakenflex_device` existe en `OctopusSpain`")
                     krakenflex_device = await self._api.registered_krakenflex_device(account)
-
-                # ✅ Guardamos la información en `self._data`
+                    _LOGGER.info(f"✅ Datos del Krakenflex Device: {krakenflex_device}")
+    
                 self._data[account] = {
                     **account_data,
                     "krakenflex_device": krakenflex_device,
                 }
-
-            _LOGGER.info(f"📊 Datos obtenidos: {self._data}")  # Verifica que los datos sean correctos
-
+    
+            _LOGGER.info(f"📊 Datos obtenidos y almacenados: {self._data}")
+    
         return self._data
     
 # class OctopusIntelligentCoordinator(DataUpdateCoordinator):

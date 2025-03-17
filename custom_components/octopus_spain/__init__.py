@@ -63,16 +63,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = OctopusIntelligentCoordinator(hass, email, password)
     
     try:
+        _LOGGER.info("⏳ Llamando a `async_config_entry_first_refresh()`")
         await coordinator.async_config_entry_first_refresh()
+        _LOGGER.info("✅ `async_config_entry_first_refresh()` completado")
     except Exception as e:
-        _LOGGER.error(f"Failed to fetch initial data: {e}")
+        _LOGGER.error(f"❌ ERROR en `async_config_entry_first_refresh()`: {e}")
         raise ConfigEntryNotReady from e  # ✅ Ahora Home Assistant sabe que no debe cargar todavía
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
+    _LOGGER.info(f"📌 Coordinador almacenado en hass.data[DOMAIN][{entry.entry_id}]")
+
     # Configurar plataformas de integración
+    _LOGGER.info(f"📡 Configurando plataformas de integración: {PLATFORMS}")
     hass.async_create_task(
-        hass.config_entries.async_forward_entry_setups(entry,  PLATFORMS)
+        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     )
 
     return True

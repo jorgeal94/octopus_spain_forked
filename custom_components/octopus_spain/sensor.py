@@ -22,6 +22,9 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    """Configurar sensores para Octopus Spain."""
+    _LOGGER.info("🛠️ Configurando sensores de Octopus Spain")
+
     email = entry.data[CONF_EMAIL]
     password = entry.data[CONF_PASSWORD]
 
@@ -29,11 +32,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     intelligentcoordinator = OctopusIntelligentCoordinator(hass, email, password)
     await intelligentcoordinator.async_config_entry_first_refresh()
 
+    _LOGGER.info(f"📊 Datos obtenidos en el coordinador: {intelligentcoordinator.data}")
+
     accounts = intelligentcoordinator.data.keys()
     for account in accounts:  
-        sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1))  # Nuevo sensor
+        _LOGGER.info(f"📡 Creando sensor para la cuenta {account}")
+        sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1)) 
 
-    async_add_entities(sensors)
+    if sensors:
+        async_add_entities(sensors)
+        _LOGGER.info(f"✅ Se han añadido {len(sensors)} sensores")
+    else:
+        _LOGGER.warning("⚠️ No se ha añadido ningún sensor")
 
 
 
