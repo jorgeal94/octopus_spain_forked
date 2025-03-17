@@ -64,9 +64,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     try:
         await coordinator.async_config_entry_first_refresh()
-    except Exception as err:
-        _LOGGER.error("Error setting up Octopus Spain: %s", err)
-        raise ConfigEntryNotReady from err  # 🔴 LANZAR ERROR ANTES DE forward_entry_setups
+    except Exception as e:
+        _LOGGER.error(f"Failed to fetch initial data: {e}")
+        raise ConfigEntryNotReady from e  # ✅ Ahora Home Assistant sabe que no debe cargar todavía
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 

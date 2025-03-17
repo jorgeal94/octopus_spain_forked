@@ -49,7 +49,6 @@ class OctopusIntelligentGo(DataUpdateCoordinator):
                 vehicle_prefs = await self._api.get_vehicle_charging_preferences(account)
                 self._data[account] = {
                     "krakenflex_device": krakenflex_device,
-                    "vehicle_charging_prefs": vehicle_prefs
                 }
         return self._data
 
