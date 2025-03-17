@@ -1,16 +1,37 @@
 # """Coordinator for Octopus Spain integration."""
 
-# import logging
-# from datetime import timedelta
-# from homeassistant.core import HomeAssistant
-# from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-# from .octopus_spain import OctopusSpain
-# from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
+import logging
+from datetime import timedelta
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from .octopus_spain import OctopusSpain
+from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
 
-# _LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
-# UPDATE_INTERVAL = timedelta(minutes=5)  # Se actualizará cada 5 minutos
+UPDATE_INTERVAL = timedelta(minutes=5)  # Se actualizará cada 5 minutos
 
+class OctopusIntelligentCoordinator(DataUpdateCoordinator):
+
+    def __init__(self, hass: HomeAssistant, email: str, password: str):
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=UPDATE_INTERVAL))
+        self._api = OctopusSpain(email, password)
+        self._data = {}
+
+    async def _async_update_data(self):
+        if await self._api.login():
+            self._data = {}
+            accounts = await self._api.accounts()
+            for account in accounts:
+                account_data = await self._api.account(account)
+                krakenflex_device = await self._api.registered_krakenflex_device(account)
+                self._data[account] = {
+                    **account_data,
+                    "krakenflex_device": krakenflex_device,
+                }
+
+        return self._data
+    
 # class OctopusIntelligentCoordinator(DataUpdateCoordinator):
 #     """Gestor de datos centralizado para la integración de Octopus Spain."""
 
@@ -54,50 +75,50 @@
 #             _LOGGER.error(f"Error actualizando datos de Octopus Spain: {err}")
 #             raise UpdateFailed(f"Error obteniendo datos: {err}")
 
-from datetime import timedelta
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from .octopus_spain import OctopusSpain
-from homeassistant.core import HomeAssistant
-_LOGGER = logging.getLogger(__name__)
+# from datetime import timedelta
+# from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+# from .octopus_spain import OctopusSpain
+# from homeassistant.core import HomeAssistant
+# _LOGGER = logging.getLogger(__name__)
 
-class OctopusIntelligentGo(DataUpdateCoordinator):
-    """Coordinador específico para la gestión de carga del vehículo."""
+# class OctopusIntelligentGo(DataUpdateCoordinator):
+#     """Coordinador específico para la gestión de carga del vehículo."""
     
-    def __init__(self, hass: HomeAssistant, email: str, password: str):
-        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=1))
-        self._api = OctopusSpain(email, password)
-        self._data = {}
+#     def __init__(self, hass: HomeAssistant, email: str, password: str):
+#         super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=1))
+#         self._api = OctopusSpain(email, password)
+#         self._data = {}
 
-    async def _async_update_data(self):
-        if await self._api.login():
-            self._data = {}
-            accounts = await self._api.accounts()
-            for account in accounts:
-                krakenflex_device = await self._api.devices(account)
-                self._data[account] = {
-                    "krakenflex_device": krakenflex_device,
-                }
-        return self._data
+#     async def _async_update_data(self):
+#         if await self._api.login():
+#             self._data = {}
+#             accounts = await self._api.accounts()
+#             for account in accounts:
+#                 krakenflex_device = await self._api.devices(account)
+#                 self._data[account] = {
+#                     "krakenflex_device": krakenflex_device,
+#                 }
+#         return self._data
 
-    async def set_device_preferences(self, account_id: str, day_of_week: str, soc: int, time: str):
-        """Actualiza las preferencias del dispositivo."""
-        if await self._api.login():
-            device_id = self._data[account_id]["krakenflex_device"]["id"]
-            schedules = [{"dayOfWeek": day_of_week.upper(), "max": soc, "time": time}]
+    # async def set_device_preferences(self, account_id: str, day_of_week: str, soc: int, time: str):
+    #     """Actualiza las preferencias del dispositivo."""
+    #     if await self._api.login():
+    #         device_id = self._data[account_id]["krakenflex_device"]["id"]
+    #         schedules = [{"dayOfWeek": day_of_week.upper(), "max": soc, "time": time}]
             
-            success = await self._api.set_device_preferences(
-                account_id=account_id,
-                device_id=device_id,
-                mode="CHARGE",
-                schedules=schedules,
-                unit="PERCENTAGE"
-            )
+    #         success = await self._api.set_device_preferences(
+    #             account_id=account_id,
+    #             device_id=device_id,
+    #             mode="CHARGE",
+    #             schedules=schedules,
+    #             unit="PERCENTAGE"
+    #         )
 
-            if success:
-                self._data[account_id]["vehicle_charging_prefs"][day_of_week] = {
-                    "max": soc,
-                    "time": time
-                }
-                self.async_update_listeners()
-                return True
-        return False
+    #         if success:
+    #             self._data[account_id]["vehicle_charging_prefs"][day_of_week] = {
+    #                 "max": soc,
+    #                 "time": time
+    #             }
+    #             self.async_update_listeners()
+    #             return True
+    #     return False

@@ -1,3 +1,95 @@
+import logging
+from datetime import timedelta
+from typing import Mapping, Any
+
+from homeassistant.helpers.typing import StateType
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, CoordinatorEntity
+from .const import (
+    CONF_PASSWORD,
+    CONF_EMAIL, UPDATE_INTERVAL
+)
+
+from homeassistant.components.sensor import (
+    SensorEntityDescription, SensorEntity, SensorStateClass
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from .octopus_spain import OctopusSpain
+from .coordinator import OctopusIntelligentCoordinator
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    email = entry.data[CONF_EMAIL]
+    password = entry.data[CONF_PASSWORD]
+
+    sensors = []
+    intelligentcoordinator = OctopusIntelligentCoordinator(hass, email, password)
+    await intelligentcoordinator.async_config_entry_first_refresh()
+
+    accounts = intelligentcoordinator.data.keys()
+    for account in accounts:  
+        sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1))  # Nuevo sensor
+
+    async_add_entities(sensors)
+
+
+
+
+class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
+
+    def __init__(self, account: str, coordinator, single: bool):
+        super().__init__(coordinator=coordinator)
+        self._account = account
+        self._state = None
+        self._attrs: Mapping[str, Any] = {}
+        self._attr_name = "Krakenflex Device" if single else f"Krakenflex Device ({account})"
+        self._attr_unique_id = f"krakenflex_device_{account}"
+        self.entity_description = SensorEntityDescription(
+            key=f"krakenflex_device_{account}",
+            icon="mdi:car-electric",
+        )  # Eliminamos `state_class=SensorStateClass.MEASUREMENT`
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Actualiza el estado con los datos del dispositivo Krakenflex."""
+        device = self.coordinator.data[self._account].get("krakenflex_device", {})
+        if device:
+            self._state = device.get("status")  # Aquí puede ser un string como "Live"
+            self._attrs = {
+                "krakenflexDeviceId": device.get("krakenflexDeviceId"),
+                "provider": device.get("provider"),
+                "vehicleMake": device.get("vehicleMake"),
+                "vehicleModel": device.get("vehicleModel"),
+                "vehicleBatterySizeInKwh": device.get("vehicleBatterySizeInKwh"),
+                "chargePointMake": device.get("chargePointMake"),
+                "chargePointModel": device.get("chargePointModel"),
+                "chargePointPowerInKw": device.get("chargePointPowerInKw"),
+                "suspended": device.get("suspended"),
+                "hasToken": device.get("hasToken"),
+                "createdAt": device.get("createdAt"),
+            }
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> str | None:
+        """Devuelve el estado del dispositivo Krakenflex (como 'Live', 'Charging', etc.)."""
+        return self._state  # Es un string, por lo que no se puede forzar a float
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Devuelve atributos adicionales del dispositivo Krakenflex."""
+        return self._attrs
+
+
+
+
 # import logging
 # from datetime import timedelta
 # from typing import Mapping, Any
@@ -401,57 +493,57 @@
 #             {}
 #         )
 
-from homeassistant.components.select import SelectEntity
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .coordinator import OctopusIntelligentGo  # Importamos el coordinador desde coordinator.py
-from .const import DOMAIN, INTELLIGENT_SOC_OPTIONS, INTELLIGENT_CHARGE_TIMES, DAYS_OF_WEEK
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-import logging
+# from homeassistant.components.select import SelectEntity
+# from homeassistant.helpers.entity_platform import AddEntitiesCallback
+# from .coordinator import OctopusIntelligentGo  # Importamos el coordinador desde coordinator.py
+# from .const import DOMAIN, INTELLIGENT_SOC_OPTIONS, INTELLIGENT_CHARGE_TIMES, DAYS_OF_WEEK
+# from homeassistant.core import HomeAssistant
+# from homeassistant.config_entries import ConfigEntry
+# from homeassistant.helpers.update_coordinator import CoordinatorEntity
+# import logging
 
-_LOGGER = logging.getLogger(__name__)
+# _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(
-    hass: HomeAssistant, 
-    entry: ConfigEntry, 
-    async_add_entities: AddEntitiesCallback
-) -> None:
-    """Set up Octopus Spain select entities from a config entry."""
+# async def async_setup_entry(
+#     hass: HomeAssistant, 
+#     entry: ConfigEntry, 
+#     async_add_entities: AddEntitiesCallback
+# ) -> None:
+#     """Set up Octopus Spain select entities from a config entry."""
     
-    # Evita reconfigurar la entrada si ya existe
-    if entry.entry_id in hass.data[DOMAIN].get("selects", []):
-        return
+#     # Evita reconfigurar la entrada si ya existe
+#     if entry.entry_id in hass.data[DOMAIN].get("selects", []):
+#         return
     
-    email = entry.data["email"]
-    password = entry.data["password"]
+#     email = entry.data["email"]
+#     password = entry.data["password"]
 
-    # Crea el coordinador y realiza la primera actualización
-    vehicle_coordinator = OctopusIntelligentGo(hass, email, password)
-    await vehicle_coordinator.async_config_entry_first_refresh()
+#     # Crea el coordinador y realiza la primera actualización
+#     vehicle_coordinator = OctopusIntelligentGo(hass, email, password)
+#     await vehicle_coordinator.async_config_entry_first_refresh()
 
-    select_entities = []
-    accounts = vehicle_coordinator.data.keys()
-    for account in accounts:
-        for day in DAYS_OF_WEEK:
-            select_entities.append(OctopusIntelligentTargetSoc(vehicle_coordinator, account, day))
-            #select_entities.append(OctopusIntelligentTargetTime(vehicle_coordinator, account, day))
+#     select_entities = []
+#     accounts = vehicle_coordinator.data.keys()
+#     for account in accounts:
+#         for day in DAYS_OF_WEEK:
+#             select_entities.append(OctopusIntelligentTargetSoc(vehicle_coordinator, account, day))
+#             #select_entities.append(OctopusIntelligentTargetTime(vehicle_coordinator, account, day))
 
-    async_add_entities(select_entities)
+#     async_add_entities(select_entities)
 
-    # Guarda la entrada para evitar duplicados
-    hass.data[DOMAIN].setdefault("selects", []).append(entry.entry_id)
+#     # Guarda la entrada para evitar duplicados
+#     hass.data[DOMAIN].setdefault("selects", []).append(entry.entry_id)
 
-class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
-    """Selector de porcentaje de carga para cada día de la semana."""
+# class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
+#     """Selector de porcentaje de carga para cada día de la semana."""
 
-    def __init__(self, coordinator: OctopusIntelligentGo, account_number: str, day_of_week: str):
-        super().__init__(coordinator)
-        self._account_number = account_number
-        self._day_of_week = day_of_week
-        self._unique_id = f"octopus_target_soc_{account_number}_{day_of_week}"
-        self._attr_name = f"Octopus SOC {day_of_week} ({account_number})"
-        self._options = INTELLIGENT_SOC_OPTIONS
+#     def __init__(self, coordinator: OctopusIntelligentGo, account_number: str, day_of_week: str):
+#         super().__init__(coordinator)
+#         self._account_number = account_number
+#         self._day_of_week = day_of_week
+#         self._unique_id = f"octopus_target_soc_{account_number}_{day_of_week}"
+#         self._attr_name = f"Octopus SOC {day_of_week} ({account_number})"
+#         self._options = INTELLIGENT_SOC_OPTIONS
 
-        preferences = self.coordinator.data.get(self._account_number, {}).get("vehicle_charging_prefs", {})
-        self._current_option = str(preferences.get(day_of_week, {}).get("max", 80))
+#         preferences = self.coordinator.data.get(self._account_number, {}).get("vehicle_charging_prefs", {})
+#         self._current_option = str(preferences.get(day_of_week, {}).get("max", 80))
