@@ -66,8 +66,14 @@ class OctopusWalletCoordinator(DataUpdateCoordinator):
 
             for account in accounts:
                 account_data = await self._api.account(account)
-                _LOGGER.info(f"📋 Datos de la cuenta {account}: {account_data}")
-
+                if account_data:
+                    wallet_balance = account_data.get(self._key, None)  # Aquí obtienes el balance de la wallet o el valor que necesites
+                    if wallet_balance is not None:
+                        self._data[self._account] = wallet_balance
+                    else:
+                        _LOGGER.error(f"❌ ERROR: No wallet balance found for {self._account}")
+                else:
+                    _LOGGER.error(f"❌ ERROR: No data found for account {self._account}")
         return self._data
 
   

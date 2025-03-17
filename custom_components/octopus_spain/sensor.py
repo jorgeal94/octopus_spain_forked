@@ -136,8 +136,12 @@ class OctopusWallet(CoordinatorEntity, SensorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._state = self.coordinator.data[self._account][self._key]
-        self.async_write_ha_state()
+        # Asegúrate de que la clave exista antes de acceder
+        if self._account in self.coordinator.data and self._key in self.coordinator.data[self._account]:
+            self._state = self.coordinator.data[self._account][self._key]
+            self.async_write_ha_state()
+        else:
+            _LOGGER.error(f"❌ ERROR: No data found for account {self._account} with key {self._key}")
 
     @property
     def native_value(self) -> StateType:
