@@ -36,10 +36,14 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.const import Platform
 from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
 from .coordinator import OctopusIntelligentCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Octopus Spain component."""

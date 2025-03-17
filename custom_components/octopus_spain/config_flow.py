@@ -29,7 +29,7 @@ class OctopusSpainConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Si las credenciales son correctas, guardamos la configuración
         return self.async_create_entry(
-            title=f"Octopus Spain {email}",
+            title=f"Octopus Spain 2.0 - {email}",
             data=user_input
         )
 
