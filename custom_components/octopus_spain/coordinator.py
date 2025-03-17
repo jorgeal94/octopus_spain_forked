@@ -47,34 +47,34 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
         return self._data
 
 ###Esto revisarlo bien que esta mal
-class OctopusWalletCoordinator(DataUpdateCoordinator):
-    """Coordinador para el sensor Octopus Wallet."""
+# class OctopusWalletCoordinator(DataUpdateCoordinator):
+#     """Coordinador para el sensor Octopus Wallet."""
 
-    def __init__(self, hass: HomeAssistant, email: str, password: str):
-        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=UPDATE_INTERVAL))
-        self._api = OctopusSpain(email, password)
-        self._data = {}
+#     def __init__(self, hass: HomeAssistant, email: str, password: str):
+#         super().__init__(hass=hass, logger=_LOGGER, name="Octopus Intelligent Go", update_interval=timedelta(minutes=UPDATE_INTERVAL))
+#         self._api = OctopusSpain(email, password)
+#         self._data = {}
 
-    async def _async_update_data(self):
-        _LOGGER.info("🔄 Ejecutando `_async_update_data()`")
+#     async def _async_update_data(self):
+#         _LOGGER.info("🔄 Ejecutando `_async_update_data()`")
 
-        if await self._api.login():
-            _LOGGER.info("🔑 Login exitoso en OctopusSpain")
-            self._data = {}
-            accounts = await self._api.accounts()
-            _LOGGER.info(f"📂 Cuentas obtenidas: {accounts}")
+#         if await self._api.login():
+#             _LOGGER.info("🔑 Login exitoso en OctopusSpain")
+#             self._data = {}
+#             accounts = await self._api.accounts()
+#             _LOGGER.info(f"📂 Cuentas obtenidas: {accounts}")
 
-            for account in accounts:
-                account_data = await self._api.account(account)
-                if account_data:
-                    wallet_balance = account_data.get(self._key, None)  # Aquí obtienes el balance de la wallet o el valor que necesites
-                    if wallet_balance is not None:
-                        self._data[self._account] = wallet_balance
-                    else:
-                        _LOGGER.error(f"❌ ERROR: No wallet balance found for {self._account}")
-                else:
-                    _LOGGER.error(f"❌ ERROR: No data found for account {self._account}")
-        return self._data
+#             for account in accounts:
+#                 account_data = await self._api.account(account)
+#                 if account_data:
+#                     wallet_balance = account_data.get(self._key, None)  # Aquí obtienes el balance de la wallet o el valor que necesites
+#                     if wallet_balance is not None:
+#                         self._data[self._account] = wallet_balance
+#                     else:
+#                         _LOGGER.error(f"❌ ERROR: No wallet balance found for {self._account}")
+#                 else:
+#                     _LOGGER.error(f"❌ ERROR: No data found for account {self._account}")
+#         return self._data
 
   
 # class OctopusIntelligentCoordinator(DataUpdateCoordinator):
