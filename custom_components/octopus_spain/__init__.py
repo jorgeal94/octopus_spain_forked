@@ -37,6 +37,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.const import Platform
+from homeassistant.config_entries import ConfigEntryNotReady
+
 from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
 from .coordinator import OctopusIntelligentCoordinator
 
@@ -59,7 +61,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     password = entry.data[CONF_PASSWORD]
 
     coordinator = OctopusIntelligentCoordinator(hass, email, password)
-    await coordinator.async_config_entry_first_refresh()
+    
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as err:
+        _LOGGER.error("Error setting up Octopus Spain: %s", err)
+        raise ConfigEntryNotReady from err  # 🔴 LANZAR ERROR ANTES DE forward_entry_setups
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
