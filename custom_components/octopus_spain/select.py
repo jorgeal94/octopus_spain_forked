@@ -5,7 +5,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Coor
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.core import HomeAssistant, callback
-from .const import INTELLIGENT_SOC_OPTIONS, INTELLIGENT_CHARGE_TIMES, DAYS_OF_WEEK
+from .const import DOMAIN,INTELLIGENT_SOC_OPTIONS, INTELLIGENT_CHARGE_TIMES, DAYS_OF_WEEK
 from .octopus_spain import OctopusSpain
 from homeassistant.config_entries import ConfigEntry
 
@@ -16,6 +16,12 @@ async def async_setup_entry(
     entry: ConfigEntry, 
     async_add_entities: AddEntitiesCallback
 ) -> None:
+    """Set up Octopus Spain select entities from a config entry."""
+    
+    # Evita reconfigurar la entrada si ya existe
+    if entry.entry_id in hass.data[DOMAIN].get("selects", []):
+        return
+    
     email = entry.data["email"]
     password = entry.data["password"]
 
@@ -30,6 +36,10 @@ async def async_setup_entry(
             select_entities.append(OctopusIntelligentTargetTime(vehicle_coordinator, account, day))
 
     async_add_entities(select_entities)
+
+    # Guarda la entrada para evitar duplicados
+    hass.data[DOMAIN].setdefault("selects", []).append(entry.entry_id)
+
 
 
 class OctopusIntelligentGo(DataUpdateCoordinator):
