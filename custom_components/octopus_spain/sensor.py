@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .octopus_spain import OctopusSpain
 from .coordinator import OctopusIntelligentCoordinator
-from .coordinator import OctopusWalletCoordinator
+#from .coordinator import OctopusWalletCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
