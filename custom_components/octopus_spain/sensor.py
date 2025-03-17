@@ -279,22 +279,33 @@
 ########################################OJOAKI
 """Sensor for Octopus Spain integration."""
 
+import logging
+
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Configura los sensores de la integración."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     devices = coordinator.data.get("data", {}).get("devices", [])
+    _LOGGER.info(f"Dispositivos: {devices}")
+    
+    if not devices:
+        _LOGGER.warning("No se encontraron dispositivos")
+        return
+
     sensors = []
 
     for device in devices:
+        _LOGGER.info(f"Dispositivo: {device}")
         sensors.append(OctopusVehicleStateSensor(coordinator, device))
         sensors.append(OctopusChargeLimitSensor(coordinator, device))
 
-    async_add_entities(sensors, True)
+    _LOGGER.info(f"Sensores creados: {len(sensors)}")
+    async_add_entities(sensors, update_before_add=True)
 
 
 class OctopusVehicleStateSensor(CoordinatorEntity, SensorEntity):
