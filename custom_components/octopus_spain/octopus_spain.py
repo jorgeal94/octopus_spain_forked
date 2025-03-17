@@ -415,4 +415,31 @@ class OctopusSpain:
                 return "data" in data and data["data"].get("setDevicePreferences") is not None
         return False
     
+    async def registered_krakenflex_device(self, account_number: str):
+        """Consulta los dispositivos registrados en Krakenflex."""
+        query = """
+        query registeredKrakenflexDevice($accountNumber: String!) {
+            registeredKrakenflexDevice(accountNumber: $accountNumber) {
+                krakenflexDeviceId
+                provider
+                vehicleMake
+                vehicleModel
+                vehicleBatterySizeInKwh
+                chargePointMake
+                chargePointModel
+                chargePointPowerInKw
+                status
+                suspended
+                hasToken
+                createdAt
+            }
+        }
+        """
+        headers = {"authorization": self._token}
+        client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
+        response = await client.execute_async(query, {"accountNumber": account_number})
+
+        return response.get("data", {}).get("registeredKrakenflexDevice", None)
+
+    
     
