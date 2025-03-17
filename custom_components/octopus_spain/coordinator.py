@@ -9,7 +9,7 @@ from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD
 
 _LOGGER = logging.getLogger(__name__)
 
-UPDATE_INTERVAL = timedelta(minutes=5)  # Se actualizará cada 5 minutos
+UPDATE_INTERVAL = 1  # Se actualizará cada 5 minutos
 
 class OctopusIntelligentCoordinator(DataUpdateCoordinator):
 
