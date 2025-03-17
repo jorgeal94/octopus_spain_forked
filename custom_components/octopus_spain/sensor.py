@@ -277,126 +277,181 @@
 
 
 ########################################OJOAKI
-"""Sensor for Octopus Spain integration."""
+# """Sensor for Octopus Spain integration."""
 
+# import logging
+
+# from homeassistant.components.sensor import SensorEntity
+# from homeassistant.helpers.update_coordinator import CoordinatorEntity
+# from .const import DOMAIN
+# _LOGGER = logging.getLogger(__name__)
+
+# async def async_setup_entry(hass, entry, async_add_entities):
+#     """Configura los sensores de la integración."""
+#     coordinator = hass.data[DOMAIN][entry.entry_id]
+    
+#     """Configura los sensores de la integración."""
+#     _LOGGER.info(f"Datos de la entrada: {entry.data}")
+
+#     # Intenta obtener el número de cuenta de la entrada de configuración
+#     account_number = entry.data.get("account_number")
+#     if not account_number:
+#         _LOGGER.error("No se encontró account_number en los datos de la entrada")
+#         return
+#     else:
+#         _LOGGER.info(f"account_number encontrado: {account_number}")
+    
+#     try:
+#         devices = await coordinator.async_get_devices(account_number)
+#     except Exception as e:
+#         _LOGGER.error(f"Error al obtener dispositivos: {e}")
+#         return
+
+#     _LOGGER.info(f"Dispositivos: {devices}")
+    
+#     if not devices:
+#         _LOGGER.warning("No se encontraron dispositivos")
+#         return
+
+#     sensors = []
+
+#     for device in devices:
+#         _LOGGER.info(f"Dispositivo: {device}")
+#         sensors.append(OctopusVehicleStateSensor(coordinator, device))
+#         sensors.append(OctopusChargeLimitSensor(coordinator, device))
+
+#     _LOGGER.info(f"Sensores creados: {len(sensors)}")
+#     async_add_entities(sensors, update_before_add=True)
+
+
+# class OctopusVehicleStateSensor(CoordinatorEntity, SensorEntity):
+#     """Sensor que muestra el estado del vehículo eléctrico."""
+
+#     def __init__(self, coordinator, device):
+#         """Inicializa el sensor."""
+#         super().__init__(coordinator)
+#         self._device_id = device.get("id")
+#         self._attr_name = f"{device.get('name', 'Vehículo')} Estado"
+#         self._attr_unique_id = f"{self._device_id}_state"
+
+#     @property
+#     def state(self):
+#         """Devuelve el estado actual del vehículo."""
+#         device_data = self._get_device_data()
+#         return device_data.get("status", {}).get("currentState", "UNKNOWN")
+
+#     @property
+#     def extra_state_attributes(self):
+#         """Atributos adicionales del sensor."""
+#         device_data = self._get_device_data()
+#         status = device_data.get("status", {})
+
+#         return {
+#             "Estado actual": status.get("current", "UNKNOWN"),
+#             "Suspendido": status.get("isSuspended", False),
+#             "Límite de carga violado": status.get("stateOfChargeLimit", {}).get("isLimitViolated", False),
+#             "Última actualización": status.get("stateOfChargeLimit", {}).get("timestamp", "UNKNOWN"),
+#         }
+
+#     def _get_device_data(self):
+#         """Obtiene los datos actualizados del dispositivo desde el Coordinator."""
+#         return next(
+#             (d for d in self.coordinator.data.get("data", {}).get("devices", []) if d.get("id") == self._device_id),
+#             {}
+#         )
+
+
+# class OctopusChargeLimitSensor(CoordinatorEntity, SensorEntity):
+#     """Sensor que muestra el límite de carga del vehículo."""
+
+#     def __init__(self, coordinator, device):
+#         """Inicializa el sensor."""
+#         super().__init__(coordinator)
+#         self._device_id = device.get("id")
+#         self._attr_name = f"{device.get('name', 'Vehículo')} Límite de Carga"
+#         self._attr_unique_id = f"{self._device_id}_charge_limit"
+
+#     @property
+#     def state(self):
+#         """Devuelve el límite de carga en porcentaje."""
+#         device_data = self._get_device_data()
+#         return device_data.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit", "UNKNOWN")
+
+#     @property
+#     def unit_of_measurement(self):
+#         """Unidad de medida."""
+#         return "%"
+
+#     @property
+#     def extra_state_attributes(self):
+#         """Atributos adicionales del sensor."""
+#         device_data = self._get_device_data()
+
+#         return {
+#             "Modelo": device_data.get("model", "UNKNOWN"),
+#             "Fabricante": device_data.get("make", "UNKNOWN"),
+#             "Modo de carga": device_data.get("preferences", {}).get("mode", "UNKNOWN"),
+#             "Horario de carga": device_data.get("preferences", {}).get("schedules", []),
+#         }
+
+#     def _get_device_data(self):
+#         """Obtiene los datos actualizados del dispositivo desde el Coordinator."""
+#         return next(
+#             (d for d in self.coordinator.data.get("data", {}).get("devices", []) if d.get("id") == self._device_id),
+#             {}
+#         )
+
+from homeassistant.components.select import SelectEntity
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from .coordinator import OctopusIntelligentGo  # Importamos el coordinador desde coordinator.py
+from .const import DOMAIN, INTELLIGENT_SOC_OPTIONS, INTELLIGENT_CHARGE_TIMES, DAYS_OF_WEEK
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import logging
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass, entry, async_add_entities):
-    """Configura los sensores de la integración."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+async def async_setup_entry(
+    hass: HomeAssistant, 
+    entry: ConfigEntry, 
+    async_add_entities: AddEntitiesCallback
+) -> None:
+    """Set up Octopus Spain select entities from a config entry."""
     
-    """Configura los sensores de la integración."""
-    _LOGGER.info(f"Datos de la entrada: {entry.data}")
-
-    # Intenta obtener el número de cuenta de la entrada de configuración
-    account_number = entry.data.get("account_number")
-    if not account_number:
-        _LOGGER.error("No se encontró account_number en los datos de la entrada")
+    # Evita reconfigurar la entrada si ya existe
+    if entry.entry_id in hass.data[DOMAIN].get("selects", []):
         return
-    else:
-        _LOGGER.info(f"account_number encontrado: {account_number}")
     
-    try:
-        devices = await coordinator.async_get_devices(account_number)
-    except Exception as e:
-        _LOGGER.error(f"Error al obtener dispositivos: {e}")
-        return
+    email = entry.data["email"]
+    password = entry.data["password"]
 
-    _LOGGER.info(f"Dispositivos: {devices}")
-    
-    if not devices:
-        _LOGGER.warning("No se encontraron dispositivos")
-        return
+    # Crea el coordinador y realiza la primera actualización
+    vehicle_coordinator = OctopusIntelligentGo(hass, email, password)
+    await vehicle_coordinator.async_config_entry_first_refresh()
 
-    sensors = []
+    select_entities = []
+    accounts = vehicle_coordinator.data.keys()
+    for account in accounts:
+        for day in DAYS_OF_WEEK:
+            select_entities.append(OctopusIntelligentTargetSoc(vehicle_coordinator, account, day))
+            #select_entities.append(OctopusIntelligentTargetTime(vehicle_coordinator, account, day))
 
-    for device in devices:
-        _LOGGER.info(f"Dispositivo: {device}")
-        sensors.append(OctopusVehicleStateSensor(coordinator, device))
-        sensors.append(OctopusChargeLimitSensor(coordinator, device))
+    async_add_entities(select_entities)
 
-    _LOGGER.info(f"Sensores creados: {len(sensors)}")
-    async_add_entities(sensors, update_before_add=True)
+    # Guarda la entrada para evitar duplicados
+    hass.data[DOMAIN].setdefault("selects", []).append(entry.entry_id)
 
+class OctopusIntelligentTargetSoc(CoordinatorEntity, SelectEntity):
+    """Selector de porcentaje de carga para cada día de la semana."""
 
-class OctopusVehicleStateSensor(CoordinatorEntity, SensorEntity):
-    """Sensor que muestra el estado del vehículo eléctrico."""
-
-    def __init__(self, coordinator, device):
-        """Inicializa el sensor."""
+    def __init__(self, coordinator: OctopusIntelligentGo, account_number: str, day_of_week: str):
         super().__init__(coordinator)
-        self._device_id = device.get("id")
-        self._attr_name = f"{device.get('name', 'Vehículo')} Estado"
-        self._attr_unique_id = f"{self._device_id}_state"
+        self._account_number = account_number
+        self._day_of_week = day_of_week
+        self._unique_id = f"octopus_target_soc_{account_number}_{day_of_week}"
+        self._attr_name = f"Octopus SOC {day_of_week} ({account_number})"
+        self._options = INTELLIGENT_SOC_OPTIONS
 
-    @property
-    def state(self):
-        """Devuelve el estado actual del vehículo."""
-        device_data = self._get_device_data()
-        return device_data.get("status", {}).get("currentState", "UNKNOWN")
-
-    @property
-    def extra_state_attributes(self):
-        """Atributos adicionales del sensor."""
-        device_data = self._get_device_data()
-        status = device_data.get("status", {})
-
-        return {
-            "Estado actual": status.get("current", "UNKNOWN"),
-            "Suspendido": status.get("isSuspended", False),
-            "Límite de carga violado": status.get("stateOfChargeLimit", {}).get("isLimitViolated", False),
-            "Última actualización": status.get("stateOfChargeLimit", {}).get("timestamp", "UNKNOWN"),
-        }
-
-    def _get_device_data(self):
-        """Obtiene los datos actualizados del dispositivo desde el Coordinator."""
-        return next(
-            (d for d in self.coordinator.data.get("data", {}).get("devices", []) if d.get("id") == self._device_id),
-            {}
-        )
-
-
-class OctopusChargeLimitSensor(CoordinatorEntity, SensorEntity):
-    """Sensor que muestra el límite de carga del vehículo."""
-
-    def __init__(self, coordinator, device):
-        """Inicializa el sensor."""
-        super().__init__(coordinator)
-        self._device_id = device.get("id")
-        self._attr_name = f"{device.get('name', 'Vehículo')} Límite de Carga"
-        self._attr_unique_id = f"{self._device_id}_charge_limit"
-
-    @property
-    def state(self):
-        """Devuelve el límite de carga en porcentaje."""
-        device_data = self._get_device_data()
-        return device_data.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit", "UNKNOWN")
-
-    @property
-    def unit_of_measurement(self):
-        """Unidad de medida."""
-        return "%"
-
-    @property
-    def extra_state_attributes(self):
-        """Atributos adicionales del sensor."""
-        device_data = self._get_device_data()
-
-        return {
-            "Modelo": device_data.get("model", "UNKNOWN"),
-            "Fabricante": device_data.get("make", "UNKNOWN"),
-            "Modo de carga": device_data.get("preferences", {}).get("mode", "UNKNOWN"),
-            "Horario de carga": device_data.get("preferences", {}).get("schedules", []),
-        }
-
-    def _get_device_data(self):
-        """Obtiene los datos actualizados del dispositivo desde el Coordinator."""
-        return next(
-            (d for d in self.coordinator.data.get("data", {}).get("devices", []) if d.get("id") == self._device_id),
-            {}
-        )
+        preferences = self.coordinator.data.get(self._account_number, {}).get("vehicle_charging_prefs", {})
+        self._current_option = str(preferences.get(day_of_week, {}).get("max", 80))
