@@ -23,13 +23,22 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
             accounts = await self._api.accounts()
             for account in accounts:
                 account_data = await self._api.account(account)
+
                 # 🔍 Verificar si el objeto tiene el método
                 if not hasattr(self._api, "registered_krakenflex_device"):
                     _LOGGER.error(f"❌ ERROR: `registered_krakenflex_device` NO existe en `OctopusSpain`")
+                    krakenflex_device = None  # ⚠️ Evita fallos si el método no existe
                 else:
                     _LOGGER.info(f"✅ `registered_krakenflex_device` existe en `OctopusSpain`")
+                    krakenflex_device = await self._api.registered_krakenflex_device(account)
 
-                krakenflex_device = await self._api.registered_krakenflex_device(account)
+                # ✅ Guardamos la información en `self._data`
+                self._data[account] = {
+                    **account_data,
+                    "krakenflex_device": krakenflex_device,
+                }
+
+            _LOGGER.info(f"📊 Datos obtenidos: {self._data}")  # Verifica que los datos sean correctos
 
         return self._data
     
