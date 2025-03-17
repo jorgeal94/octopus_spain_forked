@@ -31,8 +31,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     sensors = []
 
-    coordinator = OctopusWalletCoordinator(hass, email, password)
-    await coordinator.async_config_entry_first_refresh()
+    # coordinator = OctopusWalletCoordinator(hass, email, password)
+    # await coordinator.async_config_entry_first_refresh()
 
     intelligentcoordinator = OctopusIntelligentCoordinator(hass, email, password)
     await intelligentcoordinator.async_config_entry_first_refresh()
@@ -44,8 +44,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     for account in accounts:  
         _LOGGER.info(f"📡 Creando sensor para la cuenta {account}")
         sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1)) 
-        sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', coordinator, len(accounts) == 1))
-        sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', coordinator, len(accounts) == 1))
+        #sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', coordinator, len(accounts) == 1))
+        #sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', coordinator, len(accounts) == 1))
     if sensors:
         async_add_entities(sensors)
         _LOGGER.info(f"✅ Se han añadido {len(sensors)} sensores")
