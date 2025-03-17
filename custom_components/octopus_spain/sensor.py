@@ -290,7 +290,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
     """Configura los sensores de la integración."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
-    devices = coordinator.data.get("data", {}).get("devices", [])
+    try:
+        devices = coordinator.data.get("data", {}).get("devices", [])
+    except Exception as e:
+        _LOGGER.error(f"Error al obtener dispositivos: {e}")
+        return
+
     _LOGGER.info(f"Dispositivos: {devices}")
     
     if not devices:
