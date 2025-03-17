@@ -289,9 +289,10 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_entities):
     """Configura los sensores de la integración."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-
+    account_number = entry.data["account_number"]  # Asegúrate de tener el número de cuenta
+    
     try:
-        devices = coordinator.data.get("data", {}).get("devices", [])
+        devices = await coordinator.async_get_devices(account_number)
     except Exception as e:
         _LOGGER.error(f"Error al obtener dispositivos: {e}")
         return

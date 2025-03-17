@@ -209,23 +209,25 @@ class OctopusSpain:
         self._token = None
 
     async def login(self):
-        mutation = """
-           mutation obtainKrakenToken($input: ObtainJSONWebTokenInput!) {
-              obtainKrakenToken(input: $input) {
-                token
-              }
+      mutation = """
+         mutation obtainKrakenToken($input: ObtainJSONWebTokenInput!) {
+            obtainKrakenToken(input: $input) {
+              token
             }
-        """
-        variables = {"input": {"email": self._email, "password": self._password}}
+          }
+      """
+      variables = {"input": {"email": self._email, "password": self._password}}
 
-        client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT)
-        response = await client.execute_async(mutation, variables)
+      client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT)
+      response = await client.execute_async(mutation, variables)
 
-        if "errors" in response:
-            return False
+      if "errors" in response:
+          _LOGGER.error(f"Error al obtener el token: {response['errors']}")
+          return False
 
-        self._token = response["data"]["obtainKrakenToken"]["token"]
-        return True
+      self._token = response["data"]["obtainKrakenToken"]["token"]
+      _LOGGER.info(f"Token obtenido: {self._token}")
+      return True
 
     async def accounts(self):
         query = """
@@ -244,8 +246,10 @@ class OctopusSpain:
         client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
         response = await client.execute_async(query)
 
-        return list(map(lambda a: a["number"], response["data"]["viewer"]["accounts"]))
-
+        accounts = list(map(lambda a: a["number"], response["data"]["viewer"]["accounts"]))
+        _LOGGER.info(f"Cuentas obtenidas: {accounts}")
+        return accounts
+    
     async def devices(self, account_number: str):
         """Consulta los dispositivos del usuario en la API GraphQL."""
         query = """
@@ -300,8 +304,11 @@ class OctopusSpain:
         headers = {"authorization": self._token}
         client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
         response = await client.execute_async(query, {"accountNumber": account_number})
+    
+        devices = response.get("data", {}).get("devices", [])
+        _LOGGER.info(f"Dispositivos obtenidos para la cuenta {account_number}: {devices}")
         
-        return response.get("data", {}).get("devices", [])
+        return devices
 
     async def account(self, account: str):
         query = """
