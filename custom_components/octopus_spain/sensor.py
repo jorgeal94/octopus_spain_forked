@@ -144,13 +144,23 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
             }
 
             # Si es un SmartFlexVehicle, añade más datos
-            if device.get("deviceType") == "SmartFlexVehicle":
+            if device.get("deviceType") == "ELECTRIC_VEHICLES":
                 self._attrs.update({
-                    "make": device.get("make"),
-                    "model": device.get("model"),
-                    "integrationDeviceId": device.get("integrationDeviceId"),
-                    "chargePointPowerInKw": device.get("chargePointVariant", {}).get("powerInKw"),
-                    "mode": device.get("preferences", {}).get("mode"),
+                    # "make": device.get("make"),
+                    # "model": device.get("model"),
+                    # "integrationDeviceId": device.get("integrationDeviceId"),
+                    # "chargePointPowerInKw": device.get("chargePointVariant", {}).get("powerInKw"),
+                    # "mode": device.get("preferences", {}).get("mode"),
+                    "Status": device.get("status", {}).get("current"),
+                    "Current State": device.get("status", {}).get("currentState"),
+                    "Is Suspended": device.get("status", {}).get("isSuspended"),
+                    "State of Charge Limit": device.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit"),
+                    "Charge Point Model": device.get("chargePointVariant", {}).get("model"),
+                    "Charge Point Power (kW)": device.get("chargePointVariant", {}).get("powerInKw"),
+                    "Make": device.get("make"),
+                    "Model": device.get("model"),
+                    "Integration Device ID": device.get("integrationDeviceId"),
+                    "Mode": device.get("preferences", {}).get("mode"),
                 })
 
         self.async_write_ha_state()
