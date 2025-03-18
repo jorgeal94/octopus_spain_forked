@@ -154,3 +154,48 @@ query MyQuery {
     ]
   }
 }
+
+
+
+ updateDeviceSmartControl(input: {deviceId: "", action: SUSPEND})
+  triggerBoostCharge(input: {accountNumber: ""})
+  setDevicePreferences(
+    input: {deviceId: "", mode: CHARGE, unit: PERCENTAGE, schedules: {dayOfWeek: MONDAY, time: "", max: ""}}
+  )
+  
+
+########REVISAR##########
+
+mutation MyMutation2 {
+  setDevicePreferences(
+    input: {deviceId: "00000000-0002-4000-805e-0000000009c6", mode: CHARGE, unit: PERCENTAGE, schedules: {dayOfWeek: TUESDAY, time: "09:00", max: "85"}}
+  ) {
+    id
+  }
+}
+
+no funciona, da: 
+{
+  "errors": [
+    {
+      "message": "An internal error occurred.",
+      "locations": [
+        {
+          "line": 2,
+          "column": 3
+        }
+      ],
+      "path": [
+        "setDevicePreferences"
+      ],
+      "extensions": {
+        "errorType": "APPLICATION",
+        "errorCode": "KT-CT-7899",
+        "errorDescription": ""
+      }
+    }
+  ],
+  "data": {
+    "setDevicePreferences": null
+  }
+}
