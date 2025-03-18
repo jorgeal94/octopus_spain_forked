@@ -148,7 +148,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
         device = next((d for d in devices_data if d["id"] == device_id), None)
 
         if device:
-            self._state = traducir_current_state(device.get("status", {}).get("currentState")),  # Estado actual del dispositivo
+            self._state = device.get("status", {}).get("currentState"),  # Estado actual del dispositivo
             self._attrs = {
                 "deviceType": traducir_devicetype(device.get("deviceType")),
                 "alerts": device.get("alerts", []),
@@ -163,7 +163,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                     # "chargePointPowerInKw": device.get("chargePointVariant", {}).get("powerInKw"),
                     # "mode": device.get("preferences", {}).get("mode"),
                     "Status": traducir_state(device.get("status", {}).get("current")),
-                    #"Current State": traducir_current_state(device.get("status", {}).get("currentState")),
+                    "Current State": traducir_current_state(device.get("status", {}).get("currentState")),
                     "Is Suspended": device.get("status", {}).get("isSuspended"),
                     "State of Charge Limit": f"{device.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit")}%",
                     "Timestamp": device.get("status", {}).get("stateOfChargeLimit", {}).get("timestamp"),
