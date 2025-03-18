@@ -42,9 +42,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     sensors = []
 
-    # coordinator = OctopusWalletCoordinator(hass, email, password)
-    # await coordinator.async_config_entry_first_refresh()
-
     intelligentcoordinator = OctopusIntelligentCoordinator(hass, email, password)
     await intelligentcoordinator.async_config_entry_first_refresh()
     
@@ -62,6 +59,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1)) 
         sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', hourly_coordinator, len(accounts) == 1))
         sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', hourly_coordinator, len(accounts) == 1))
+        sensors.append(OctopusInvoice(account, hourly_coordinator, len(accounts) == 1))
         devices = intelligentcoordinator.data[account].get("devices", [])
         for device in devices:
             _LOGGER.info(f"🔧 Creando sensor para el dispositivo {device['name']} ({device['id']})")
@@ -313,6 +311,45 @@ class OctopusWallet(CoordinatorEntity, SensorEntity):
         return self._state
     
 
+class OctopusInvoice(CoordinatorEntity, SensorEntity):
+
+    def __init__(self, account: str, coordinator, single: bool):
+        super().__init__(coordinator=coordinator)
+        self._state = None
+        self._account = account
+        self._attrs: Mapping[str, Any] = {}
+        self._attr_name = "Última Factura Octopus" if single else f"Última Factura Octopus ({account})"
+        self._attr_unique_id = f"last_invoice_{account}"
+        self.entity_description = SensorEntityDescription(
+            key=f"last_invoice_{account}",
+            icon="mdi:currency-eur",
+            native_unit_of_measurement=CURRENCY_EURO,
+            state_class=SensorStateClass.MEASUREMENT
+        )
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        data = self.coordinator.data[self._account]['last_invoice']
+        self._state = data['amount']
+        self._attrs = {
+            'Inicio': data['start'],
+            'Fin': data['end'],
+            'Emitida': data['issued']
+        }
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> StateType:
+        return self._state
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        return self._attrs
 
 # import logging
 # from datetime import timedelta
