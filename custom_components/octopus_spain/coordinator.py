@@ -36,10 +36,11 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
                 else:
                     krakenflex_device = await self._api.registered_krakenflex_device(account)
                     _LOGGER.info(f"✅ Datos del Krakenflex Device: {krakenflex_device}")
-
+                    devices = await self._api.devices(account)
                 self._data[account] = {
                     **account_data,
                     "krakenflex_device": krakenflex_device,
+                    "devices" : devices
                 }
 
             _LOGGER.info(f"📊 Datos obtenidos y almacenados: {self._data}")

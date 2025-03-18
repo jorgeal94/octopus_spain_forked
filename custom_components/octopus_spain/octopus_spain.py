@@ -251,64 +251,59 @@ class OctopusSpain:
         return accounts
     
     async def devices(self, account_number: str):
-        """Consulta los dispositivos del usuario en la API GraphQL."""
-        query = """
-        query MyQuery($accountNumber: String!) {
+      """Consulta los dispositivos vinculados a la cuenta en Krakenflex."""
+      query = """
+      query devices($accountNumber: String!) {
           devices(accountNumber: $accountNumber) {
-            id
-            name
-            status {
-              current
-              currentState
-              isSuspended
-              stateOfChargeLimit {
-                isLimitViolated
-                timestamp
-                upperSocLimit
-              }
-            }
-            deviceType
-            alerts {
-              message
-              publishedAt
-            }
-            ... on SmartFlexVehicle {
               id
               name
-              chargePointVariant {
-                amperage
-                integrationStatus
-                isIntegrationLive
-                model
-                powerInKw
-                variantId
+              deviceType
+              status {
+                  current
+                  currentState
+                  isSuspended
+                  ... on SmartFlexVehicleStatus {
+                      stateOfChargeLimit {
+                          isLimitViolated
+                          timestamp
+                          upperSocLimit
+                      }
+                  }
               }
               alerts {
-                message
-                publishedAt
+                  message
+                  publishedAt
               }
-              deviceType
-              make
-              integrationDeviceId
-              model
-              preferences {
-                schedules {
-                  ...SmartFlexDevicePreferenceScheduleFragment
-                }
-                mode
+              ... on SmartFlexVehicle {
+                  make
+                  model
+                  integrationDeviceId
+                  chargePointVariant {
+                      amperage
+                      integrationStatus
+                      isIntegrationLive
+                      model
+                      powerInKw
+                      variantId
+                  }
+                  preferences {
+                      schedules {
+                          dayOfWeek
+                          max
+                          min
+                          time
+                      }
+                      mode
+                  }
               }
-            }
           }
-        }
-        """
-        headers = {"authorization": self._token}
-        client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
-        response = await client.execute_async(query, {"accountNumber": account_number})
-    
-        devices = response.get("data", {}).get("devices", [])
-        _LOGGER.info(f"Dispositivos obtenidos para la cuenta {account_number}: {devices}")
-        
-        return devices
+      }
+      """
+      headers = {"authorization": self._token}
+      client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
+      response = await client.execute_async(query, {"accountNumber": account_number})
+  
+      return response.get("data", {}).get("devices", None)
 
     async def account(self, account: str):
         query = """

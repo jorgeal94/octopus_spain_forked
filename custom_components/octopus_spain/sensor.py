@@ -46,6 +46,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1)) 
         #sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', coordinator, len(accounts) == 1))
         #sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', coordinator, len(accounts) == 1))
+        devices = intelligentcoordinator.data[account].get("devices", [])
+        for device in devices:
+            _LOGGER.info(f"🔧 Creando sensor para el dispositivo {device['name']} ({device['id']})")
+            sensors.append(OctopusDevice(account, device, intelligentcoordinator))
+
     if sensors:
         async_add_entities(sensors)
         _LOGGER.info(f"✅ Se han añadido {len(sensors)} sensores")
@@ -104,6 +109,61 @@ class OctopusKrakenflexDevice(CoordinatorEntity, SensorEntity):
         """Devuelve atributos adicionales del dispositivo Krakenflex."""
         return self._attrs
 
+class OctopusDevice(CoordinatorEntity, SensorEntity):
+    """Sensor para un dispositivo estándar de Octopus."""
+
+    def __init__(self, account: str, device: dict, coordinator):
+        super().__init__(coordinator=coordinator)
+        self._account = account
+        self._device = device
+        self._state = None
+        self._attrs: Mapping[str, Any] = {}
+        self._attr_name = f"{device['name']} ({account})"
+        self._attr_unique_id = f"octopus_device_{device['id']}"
+        self.entity_description = SensorEntityDescription(
+            key=f"device_{device['id']}",
+            icon="mdi:power-plug",
+        )
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Actualiza el estado con los datos del dispositivo."""
+        device_id = self._device["id"]
+        devices_data = self.coordinator.data[self._account].get("devices", [])
+        device = next((d for d in devices_data if d["id"] == device_id), None)
+
+        if device:
+            self._state = device.get("status", {}).get("current", "Unknown")  # Estado actual del dispositivo
+            self._attrs = {
+                "deviceType": device.get("deviceType"),
+                "alerts": device.get("alerts", []),
+            }
+
+            # Si es un SmartFlexVehicle, añade más datos
+            if device.get("deviceType") == "SmartFlexVehicle":
+                self._attrs.update({
+                    "make": device.get("make"),
+                    "model": device.get("model"),
+                    "integrationDeviceId": device.get("integrationDeviceId"),
+                    "chargePointPowerInKw": device.get("chargePointVariant", {}).get("powerInKw"),
+                    "mode": device.get("preferences", {}).get("mode"),
+                })
+
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> str | None:
+        """Devuelve el estado actual del dispositivo."""
+        return self._state
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Atributos adicionales del dispositivo."""
+        return self._attrs
 
 
 #######ESTO PROBARLO NO LAS TENGO TODAS CONMIGO 
