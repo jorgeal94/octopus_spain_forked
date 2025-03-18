@@ -139,7 +139,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
         if device:
             self._state = device.get("status", {}).get("current", "Unknown")  # Estado actual del dispositivo
             self._attrs = {
-                "deviceType": device.get("deviceType"),
+                "deviceType": traducir_devicetype(device.get("deviceType")),
                 "alerts": device.get("alerts", []),
             }
 
@@ -161,7 +161,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                     "Charge Point Power (kW)": device.get("chargePointVariant", {}).get("powerInKw"),
                     "Make": device.get("make"),
                     "Model": device.get("model"),
-                    "Mode": device.get("preferences", {}).get("mode"),
+                    "Mode": traducir_modo(device.get("preferences", {}).get("mode")),
                 })
 
                 # Si hay horarios de carga, los agregamos
@@ -216,6 +216,36 @@ STATE_TRANSLATIONS = {
 
 def traducir_state(state):
     return STATE_TRANSLATIONS.get(state, state)  # Devuelve el estado original si no está en el diccionario
+
+def traducir_modo(mode):
+    # Asignar un valor visual al modo
+    if mode == "CHARGE":
+        return "⚡ Cargador"
+    elif mode == "COOL":
+        return "❄️ Refrigeración"
+    elif mode == "HEAT":
+        return "🔥 Calefacción"
+    else:
+        return "Modo desconocido"
+
+def traducir_devicetype(device_type):
+    # Asignar un valor visual al tipo de dispositivo
+    if device_type == "BATTERIES":
+        return "🔋 Baterías"
+    elif device_type == "ELECTRIC_VEHICLES":
+        return "🚗 Vehículos Eléctricos"
+    elif device_type == "INVERTERS":
+        return "⚡ Inversores"
+    elif device_type == "HEAT_PUMPS":
+        return "🌡️ Bombas de Calor"
+    elif device_type == "STORAGE_HEATERS":
+        return "🔥 Calefactores de Almacenamiento"
+    elif device_type == "THERMOSTATS":
+        return "🧳 Termostatos"
+    else:
+        return "Tipo desconocido"
+
+
 
 #######ESTO PROBARLO NO LAS TENGO TODAS CONMIGO 
 
