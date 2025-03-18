@@ -163,6 +163,14 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                     "Mode": device.get("preferences", {}).get("mode"),
                 })
 
+                # Si hay horarios de carga, los agregamos
+                schedules = device.get("preferences", {}).get("schedules", [])
+                if schedules:
+                    self._attrs["Charge Schedules"] = [
+                    f"{s['dayOfWeek']}: Max {s['max']}% at {s['time']}"
+                    for s in schedules
+                ]
+
         self.async_write_ha_state()
 
     @property
