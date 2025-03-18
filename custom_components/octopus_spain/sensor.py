@@ -176,6 +176,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                     "Make": device.get("make"),
                     "Model": device.get("model"),
                     "Mode": traducir_modo(device.get("preferences", {}).get("mode")),
+                    "BatterySize": device.get("vehicleVariant", {}).get("batterySize"),
                 })
 
                 # Si hay horarios de carga, los agregamos
