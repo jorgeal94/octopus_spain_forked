@@ -22,6 +22,17 @@ from .coordinator import OctopusIntelligentCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
+DAY_TRANSLATION = {
+    "MONDAY": "Lunes",
+    "TUESDAY": "Martes",
+    "WEDNESDAY": "Miércoles",
+    "THURSDAY": "Jueves",
+    "FRIDAY": "Viernes",
+    "SATURDAY": "Sábado",
+    "SUNDAY": "Domingo",
+}
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Configurar sensores para Octopus Spain."""
     _LOGGER.info("🛠️ Configurando sensores de Octopus Spain")
@@ -167,10 +178,14 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                 # Si hay horarios de carga, los agregamos
                 schedules = device.get("preferences", {}).get("schedules", [])
                 if schedules:
-                    self._attrs["Charge Schedules"] = [
-                    f"{DAY_TRANSLATION.get(s['dayOfWeek'], s['dayOfWeek'])}: Max {s['max']}% at {s['time']}"
-                    for s in schedules
-                ]
+                    translated_schedules = []
+                    for s in schedules:
+                        day_english = s['dayOfWeek']
+                        day_spanish = DAY_TRANSLATION.get(day_english, day_english)  # Si no encuentra la traducción, usa el original
+                        print(f"🔍 Traduciendo {day_english} -> {day_spanish}")  # Depuración
+                        translated_schedules.append(f"{day_spanish}: {s['max']}% a las {s['time']}")
+    
+                    self._attrs["Charge Schedules"] = translated_schedules
 
         self.async_write_ha_state()
 
@@ -186,15 +201,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
 
 
 
-DAY_TRANSLATION = {
-    "MONDAY": "Lunes",
-    "TUESDAY": "Martes",
-    "WEDNESDAY": "Miércoles",
-    "THURSDAY": "Jueves",
-    "FRIDAY": "Viernes",
-    "SATURDAY": "Sábado",
-    "SUNDAY": "Domingo",
-}
+
 
 
 CURRENT_STATE_TRANSLATIONS = {
