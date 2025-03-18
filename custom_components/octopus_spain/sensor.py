@@ -151,10 +151,12 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                     # "integrationDeviceId": device.get("integrationDeviceId"),
                     # "chargePointPowerInKw": device.get("chargePointVariant", {}).get("powerInKw"),
                     # "mode": device.get("preferences", {}).get("mode"),
-                    "Status": device.get("status", {}).get("current"),
-                    "Current State": traducir_estado(device.get("status", {}).get("currentState")),
+                    "Status": traducir_state(device.get("status", {}).get("current")),
+                    "Current State": traducir_current_state(device.get("status", {}).get("currentState")),
                     "Is Suspended": device.get("status", {}).get("isSuspended"),
                     "State of Charge Limit": device.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit"),
+                    "Timestamp": device.get("status", {}).get("stateOfChargeLimit", {}).get("timestamp"),
+                    "isLimitViolated": "⚠️ Sí" if device.get("status", {}).get("stateOfChargeLimit", {}).get("isLimitViolated") else "✅ No",
                     "Charge Point Model": device.get("chargePointVariant", {}).get("model"),
                     "Charge Point Power (kW)": device.get("chargePointVariant", {}).get("powerInKw"),
                     "Make": device.get("make"),
@@ -184,7 +186,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
         return self._attrs
 
 
-STATE_TRANSLATIONS = {
+CURRENT_STATE_TRANSLATIONS = {
     "AUTHENTICATION_PENDING": "🔄 Autenticación pendiente",
     "AUTHENTICATION_FAILED": "❌ Autenticación fallida",
     "AUTHENTICATION_COMPLETE": "✅ Autenticación completada",
@@ -201,9 +203,20 @@ STATE_TRANSLATIONS = {
     "RETIRED": "🗑️ Dispositivo retirado"
 }
 
-def traducir_estado(estado):
-    return STATE_TRANSLATIONS.get(estado, estado)  # Devuelve el estado original si no está en el diccionario
+def traducir_current_state(estado):
+    return CURRENT_STATE_TRANSLATIONS.get(estado, estado)  # Devuelve el estado original si no está en el diccionario
 
+STATE_TRANSLATIONS = {
+    "ONBOARDING": "🚀 Registro en curso",
+    "PENDING_LIVE": "⏳ Pendiente de activación",
+    "LIVE": "✅ Activo",
+    "ONBOARDING_TEST_IN_PROGRESS": "🔍 Prueba de activación en curso",
+    "FAILED_ONBOARDING_TEST": "❌ Prueba de activación fallida",
+    "RETIRED": "🗑️ Dispositivo retirado"
+}
+
+def traducir_state(state):
+    return STATE_TRANSLATIONS.get(state, state)  # Devuelve el estado original si no está en el diccionario
 
 #######ESTO PROBARLO NO LAS TENGO TODAS CONMIGO 
 
