@@ -47,6 +47,36 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
 
         return self._data
 
+
+class OctopusHourlyCoordinator(DataUpdateCoordinator):
+    """Coordinator para actualizar datos cada hora."""
+
+    def __init__(self, hass: HomeAssistant, email: str, password: str):
+        super().__init__(hass=hass, logger=_LOGGER, name="Octopus Hourly Data", update_interval=timedelta(hours=1))
+        self._api = OctopusSpain(email, password)
+        self._data = {}
+
+    async def _async_update_data(self):
+        _LOGGER.info("🔄 Ejecutando `_async_update_data()` (cada hora)")
+
+        if await self._api.login():
+            _LOGGER.info("🔑 Login exitoso en OctopusSpain (Hourly Coordinator)")
+            self._data = {}
+            accounts = await self._api.accounts()
+            _LOGGER.info(f"📂 Cuentas obtenidas: {accounts}")
+
+            for account in accounts:
+                account_data = await self._api.account(account)
+                _LOGGER.info(f"📋 Datos de la cuenta {account}: {account_data}")
+
+                self._data[account] = {
+                    **account_data
+                }
+
+            _LOGGER.info(f"📊 Datos obtenidos y almacenados (Hourly Coordinator): {self._data}")
+
+        return self._data
+    
 ###Esto revisarlo bien que esta mal
 # class OctopusWalletCoordinator(DataUpdateCoordinator):
 #     """Coordinador para el sensor Octopus Wallet."""
