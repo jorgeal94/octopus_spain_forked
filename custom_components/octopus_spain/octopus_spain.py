@@ -263,10 +263,13 @@ class OctopusSpain:
                   currentState
                   isSuspended
                   ... on SmartFlexVehicleStatus {
+                      current
+                      isSuspended
+                      currentState
                       stateOfChargeLimit {
-                          isLimitViolated
-                          timestamp
-                          upperSocLimit
+                        isLimitViolated
+                        timestamp
+                        upperSocLimit
                       }
                   }
               }
@@ -275,27 +278,49 @@ class OctopusSpain:
                   publishedAt
               }
               ... on SmartFlexVehicle {
-                  make
-                  model
-                  integrationDeviceId
+                  id
+                  name
                   chargePointVariant {
-                      amperage
-                      integrationStatus
-                      isIntegrationLive
-                      model
-                      powerInKw
-                      variantId
+                    amperage
+                    integrationStatus
+                    isIntegrationLive
+                    model
+                    powerInKw
+                    variantId
                   }
+                  alerts {
+                    message
+                    publishedAt
+                  }
+                  deviceType
+                  make
+                  integrationDeviceId
+                  model
                   preferences {
-                      schedules {
-                          dayOfWeek
-                          max
-                          min
-                          time
-                      }
-                      mode
+                    mode
+                    targetType
+                    unit
+                    schedules {
+                      dayOfWeek
+                      max
+                      min
+                      time
+                    }
                   }
-              }
+                  vehicleVariant {
+                    year
+                    vehicleId
+                    model
+                    isIntegrationLive
+                    integrationStatus
+                    batterySize
+                  }
+                  status {
+                    isSuspended
+                    currentState
+                    current
+                  }
+                }
           }
       }
       """

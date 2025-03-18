@@ -154,14 +154,13 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                     "Status": traducir_state(device.get("status", {}).get("current")),
                     "Current State": traducir_current_state(device.get("status", {}).get("currentState")),
                     "Is Suspended": device.get("status", {}).get("isSuspended"),
-                    "State of Charge Limit": device.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit"),
+                    "State of Charge Limit": f"{device.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit")}%",
                     "Timestamp": device.get("status", {}).get("stateOfChargeLimit", {}).get("timestamp"),
                     "isLimitViolated": "⚠️ Sí" if device.get("status", {}).get("stateOfChargeLimit", {}).get("isLimitViolated") else "✅ No",
                     "Charge Point Model": device.get("chargePointVariant", {}).get("model"),
                     "Charge Point Power (kW)": device.get("chargePointVariant", {}).get("powerInKw"),
                     "Make": device.get("make"),
                     "Model": device.get("model"),
-                    "Integration Device ID": device.get("integrationDeviceId"),
                     "Mode": device.get("preferences", {}).get("mode"),
                 })
 
