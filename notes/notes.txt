@@ -1,0 +1,156 @@
+query MyQuery {
+  devices(accountNumber: "A-D6AA7C06") {
+    id
+    name
+    deviceType
+    ... on SmartFlexVehicle {
+      id
+      name
+      chargePointVariant {
+        amperage
+        integrationStatus
+        isIntegrationLive
+        model
+        powerInKw
+        variantId
+      }
+      alerts {
+        message
+        publishedAt
+      }
+      deviceType
+      make
+      integrationDeviceId
+      model
+      preferences {
+        mode
+        targetType
+        unit
+        schedules {
+          dayOfWeek
+          max
+          min
+          time
+        }
+      }
+      vehicleVariant {
+        year
+        vehicleId
+        model
+        isIntegrationLive
+        integrationStatus
+        batterySize
+      }
+      status {
+        isSuspended
+        currentState
+        current
+      }
+    }
+    status {
+      ... on SmartFlexVehicleStatus {
+        current
+        isSuspended
+        currentState
+        stateOfChargeLimit {
+          isLimitViolated
+          timestamp
+          upperSocLimit
+        }
+      }
+    }
+  }
+}
+
+
+
+{
+  "data": {
+    "devices": [
+      {
+        "id": "00000000-0002-4000-805e-0000000009c6",
+        "name": "Tesla Model 3",
+        "deviceType": "ELECTRIC_VEHICLES",
+        "chargePointVariant": {
+          "amperage": null,
+          "integrationStatus": "NOT_AVAILABLE",
+          "isIntegrationLive": false,
+          "model": "Tesla 3 Pin mains charger",
+          "powerInKw": "2.400",
+          "variantId": 399
+        },
+        "alerts": [],
+        "make": "Tesla",
+        "integrationDeviceId": null,
+        "model": "Model 3",
+        "preferences": {
+          "mode": "CHARGE",
+          "targetType": "ABSOLUTE_STATE_OF_CHARGE",
+          "unit": "PERCENTAGE",
+          "schedules": [
+            {
+              "dayOfWeek": "MONDAY",
+              "max": 80,
+              "min": null,
+              "time": "08:00:00"
+            },
+            {
+              "dayOfWeek": "TUESDAY",
+              "max": 80,
+              "min": null,
+              "time": "08:00:00"
+            },
+            {
+              "dayOfWeek": "WEDNESDAY",
+              "max": 80,
+              "min": null,
+              "time": "08:00:00"
+            },
+            {
+              "dayOfWeek": "THURSDAY",
+              "max": 80,
+              "min": null,
+              "time": "08:00:00"
+            },
+            {
+              "dayOfWeek": "FRIDAY",
+              "max": 80,
+              "min": null,
+              "time": "08:00:00"
+            },
+            {
+              "dayOfWeek": "SATURDAY",
+              "max": 80,
+              "min": null,
+              "time": "08:00:00"
+            },
+            {
+              "dayOfWeek": "SUNDAY",
+              "max": 80,
+              "min": null,
+              "time": "08:00:00"
+            }
+          ]
+        },
+        "vehicleVariant": {
+          "year": 2019,
+          "vehicleId": 1138,
+          "model": "Model 3 Long Range Dual Motor",
+          "isIntegrationLive": true,
+          "integrationStatus": "GENERALLY_AVAILABLE",
+          "batterySize": "73.50"
+        },
+        "status": {
+          "isSuspended": false,
+          "currentState": "SMART_CONTROL_NOT_AVAILABLE",
+          "current": "LIVE",
+          "stateOfChargeLimit": {
+            "isLimitViolated": false,
+            "timestamp": "2025-03-18T07:39:10Z",
+            "upperSocLimit": 80
+          }
+        }
+      }
+    ]
+  }
+}

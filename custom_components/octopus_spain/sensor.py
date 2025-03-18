@@ -168,7 +168,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                 schedules = device.get("preferences", {}).get("schedules", [])
                 if schedules:
                     self._attrs["Charge Schedules"] = [
-                    f"{s['dayOfWeek']}: Max {s['max']}% at {s['time']}"
+                    f"{DAY_TRANSLATION.get(s['dayOfWeek'], s['dayOfWeek'])}: Max {s['max']}% at {s['time']}"
                     for s in schedules
                 ]
 
@@ -183,6 +183,18 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
         """Atributos adicionales del dispositivo."""
         return self._attrs
+
+
+
+DAY_TRANSLATION = {
+    "MONDAY": "Lunes",
+    "TUESDAY": "Martes",
+    "WEDNESDAY": "Miércoles",
+    "THURSDAY": "Jueves",
+    "FRIDAY": "Viernes",
+    "SATURDAY": "Sábado",
+    "SUNDAY": "Domingo",
+}
 
 
 CURRENT_STATE_TRANSLATIONS = {
