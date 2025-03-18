@@ -148,7 +148,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
         device = next((d for d in devices_data if d["id"] == device_id), None)
 
         if device:
-            self._state = device.get("status", {}).get("currentState"),  # Estado actual del dispositivo
+            self._state = device.get("status", {}).get("currentState")  # Estado actual del dispositivo
             self._attrs = {
                 "deviceType": traducir_devicetype(device.get("deviceType")),
                 "alerts": device.get("alerts", []),
