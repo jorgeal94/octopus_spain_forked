@@ -152,7 +152,7 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
                     # "chargePointPowerInKw": device.get("chargePointVariant", {}).get("powerInKw"),
                     # "mode": device.get("preferences", {}).get("mode"),
                     "Status": device.get("status", {}).get("current"),
-                    "Current State": device.get("status", {}).get("currentState"),
+                    "Current State": traducir_estado(device.get("status", {}).get("currentState")),
                     "Is Suspended": device.get("status", {}).get("isSuspended"),
                     "State of Charge Limit": device.get("status", {}).get("stateOfChargeLimit", {}).get("upperSocLimit"),
                     "Charge Point Model": device.get("chargePointVariant", {}).get("model"),
@@ -182,6 +182,27 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
         """Atributos adicionales del dispositivo."""
         return self._attrs
+
+
+STATE_TRANSLATIONS = {
+    "AUTHENTICATION_PENDING": "🔄 Autenticación pendiente",
+    "AUTHENTICATION_FAILED": "❌ Autenticación fallida",
+    "AUTHENTICATION_COMPLETE": "✅ Autenticación completada",
+    "TEST_CHARGE_IN_PROGRESS": "⚡ Carga de prueba en curso",
+    "TEST_CHARGE_FAILED": "❌ Prueba de carga fallida",
+    "TEST_CHARGE_NOT_AVAILABLE": "🚫 Prueba de carga no disponible",
+    "SETUP_COMPLETE": "✅ Configuración completa",
+    "SMART_CONTROL_CAPABLE": "🔌 Listo para control inteligente",
+    "SMART_CONTROL_IN_PROGRESS": "⚡ Control inteligente en curso",
+    "BOOSTING": "⚡🚀 Carga manual en curso",
+    "SMART_CONTROL_OFF": "⏸️ Control inteligente desactivado",
+    "SMART_CONTROL_NOT_AVAILABLE": "🚫 Control inteligente no disponible",
+    "LOST_CONNECTION": "🔴 Conexión perdida",
+    "RETIRED": "🗑️ Dispositivo retirado"
+}
+
+def traducir_estado(estado):
+    return STATE_TRANSLATIONS.get(estado, estado)  # Devuelve el estado original si no está en el diccionario
 
 
 #######ESTO PROBARLO NO LAS TENGO TODAS CONMIGO 
