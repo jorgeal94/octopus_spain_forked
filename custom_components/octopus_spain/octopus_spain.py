@@ -467,6 +467,15 @@ class OctopusSpain:
       weekday_time: str, weekend_time: str
 ):  
       """Envía las preferencias de carga del vehículo a la API de Octopus."""
+    
+      # Asegúrate de que el token esté disponible
+      if not self._token:
+          _LOGGER.error("❌ No se ha obtenido un token válido. Llamando a login...")
+          login_successful = await self.login()  # Intentar obtener el token
+          if not login_successful:
+              _LOGGER.error("❌ No se pudo obtener el token. Abortando operación.")
+              return {"success": False, "errors": ["No se pudo obtener el token de autenticación."]}
+
       mutation = """
       mutation vehicleChargingPreferences($input: VehicleChargingPreferencesInput!) {
         setVehicleChargePreferences(input: $input) {
