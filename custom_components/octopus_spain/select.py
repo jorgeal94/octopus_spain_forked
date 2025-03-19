@@ -82,11 +82,11 @@ class OctopusChargeSchedule(CoordinatorEntity, SelectEntity):
 
         # Simulación de una llamada a la API para actualizar la configuración
         success = await self.coordinator._api.setVehicleChargePreferences(
-            accountNumber=self._account,
-            weekdayTargetSoc=85,  # Fijo en 85% por ahora
-            weekendTargetSoc=85,
-            weekdayTargetTime=option,
-            weekendTargetTime=option,
+            account_number=self._account,
+            weekday_soc=85,  # Fijo en 85% por ahora
+            weekend_soc=85,
+            weekday_time=option,
+            weekend_time=option,
         )
 
         if success:
