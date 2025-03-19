@@ -53,7 +53,7 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
     
         try:
             response = await self._api.setVehicleChargePreferences(
-                accountNumber=account_number,
+                account_number=account_number,
                 weekdayTargetSoc=85,  # Puedes hacer que estos valores sean configurables
                 weekendTargetSoc=85,
                 weekdayTargetTime=weekday_target_time,
