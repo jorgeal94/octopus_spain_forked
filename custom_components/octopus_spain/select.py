@@ -216,12 +216,12 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
                 "max": max_soc if day == self._day else self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", {}).get(day, {}).get("max", "90"),
             })
 
-        success = await self.coordinator._api.set_device_preferences({
-            "device_id": "00000000-0002-4000-805e-0000000009c6",
-            "mode": "CHARGE",
-            "unit": "PERCENTAGE",
-            "schedules": schedules,
-        })
+        success = await self.coordinator._api.set_device_preferences(
+            device_id= "00000000-0002-4000-805e-0000000009c6",
+            mode= "CHARGE",
+            unit= "PERCENTAGE",
+            schedules= schedules,
+        )
 
         if success:
             self._current_time = time
@@ -275,12 +275,12 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
                 "max": max_soc if day == self._day else self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", {}).get(day, {}).get("max", "90"),
             })
 
-        success = await self.coordinator._api.set_device_preferences({
-            "device_id": "00000000-0002-4000-805e-0000000009c6",
-            "mode": "CHARGE",
-            "unit": "PERCENTAGE",
-            "schedules": schedules,
-        })
+        success = await self.coordinator._api.set_device_preferences(
+            device_id= "00000000-0002-4000-805e-0000000009c6",
+            mode= "CHARGE",
+            unit= "PERCENTAGE",
+            schedules= schedules,
+        )
 
         if success:
             self._current_soc = int(max_soc)
