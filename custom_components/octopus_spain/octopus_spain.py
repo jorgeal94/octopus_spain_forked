@@ -485,7 +485,7 @@ class OctopusSpain:
       }
 
       headers = {
-          "Authorization": f"Bearer {self._token}",  # Asegúrate de que `self._token` esté correctamente definido
+          "authorization": self._token,  # Asegúrate de que `self._token` esté correctamente definido
           "Content-Type": "application/json"
       }
 
