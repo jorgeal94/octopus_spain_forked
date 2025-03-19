@@ -217,3 +217,16 @@ mutation vehicleChargingPreferences {
   
 }
 
+
+
+
+
+########FUNCIONA!!!!!!!!!!!!!!!!!!!!
+
+mutation MyMutation2 {
+  setDevicePreferences(
+    input: {deviceId: "00000000-0002-4000-805e-0000000009c6", mode: CHARGE, unit: PERCENTAGE, schedules: [{dayOfWeek: MONDAY, time: "09:00", max: "90"},{dayOfWeek: TUESDAY, time: "09:00", max: "90"},{dayOfWeek: WEDNESDAY, time: "09:00", max: "90"},{dayOfWeek: THURSDAY, time: "09:00", max: "90"},{dayOfWeek: FRIDAY, time: "09:00", max: "90"},{dayOfWeek: SATURDAY, time: "09:00", max: "90"},{dayOfWeek: SUNDAY, time: "09:00", max: "90"}]}
+  ) {
+    id
+  }
+}
