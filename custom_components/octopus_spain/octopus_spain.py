@@ -486,7 +486,7 @@ class OctopusSpain:
 
         async with aiohttp.ClientSession() as session:
             headers = {
-                "Authorization": f"Bearer {self._token}",  # Verifica que `self.auth_token` esté correctamente definido
+                "authorization": self._token,  # Verifica que `self.auth_token` esté correctamente definido
                 "Content-Type": "application/json"
             }
             async with session.post(
