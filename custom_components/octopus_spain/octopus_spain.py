@@ -468,7 +468,7 @@ class OctopusSpain:
 ):  
       """Envía las preferencias de carga del vehículo a la API de Octopus."""
       mutation = """
-      mutation vehicleChargingPreferences($input: SetVehicleChargePreferencesInput!) {
+      mutation vehicleChargingPreferences($input: VehicleChargingPreferencesInput!) {
         setVehicleChargePreferences(input: $input) {
           __typename
         }
@@ -483,27 +483,26 @@ class OctopusSpain:
               "weekendTargetTime": weekend_time,
           }
       }
-  
+
       headers = {
           "Authorization": f"Bearer {self._token}",  # Asegúrate de que `self._token` esté correctamente definido
           "Content-Type": "application/json"
       }
-  
+
       # Usamos el mismo esquema que en `login` con `GraphqlClient`
       client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
-      
+
       try:
           response = await client.execute_async(mutation, variables)
-  
+
           if "errors" in response:
               _LOGGER.error(f"❌ Error al establecer preferencias de carga: {response['errors']}")
               return {"success": False, "errors": response["errors"]}
-  
+
           _LOGGER.info("✅ Preferencias de carga del vehículo actualizadas correctamente.")
           return response.get("data", {}).get("setVehicleChargePreferences", {})
-  
+
       except aiohttp.ClientError as e:
           _LOGGER.error(f"⚠️ Error de red en setVehicleChargePreferences: {e}")
           return {"success": False, "errors": [str(e)]}
-      
-      
+
