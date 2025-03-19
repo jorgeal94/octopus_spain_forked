@@ -106,7 +106,7 @@ class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
         super().__init__(coordinator)
         self._account = account
         self._is_weekend = is_weekend
-        self._attr_name = "SOC de carga" if not is_weekend else f"SOC de carga (Fin de semana) ({account})"
+        self._attr_name = f"SOC de carga ({account})" if not is_weekend else f"SOC de carga (Fin de semana) ({account})"
         self._attr_unique_id = f"octopus_charge_soc_{account}_weekend" if is_weekend else f"octopus_charge_soc_{account}"
         self._attr_options = [str(i) for i in range(0, 101, 5)]  # Opciones de SOC de 0 a 100, en pasos de 5
         self._current_soc = None
@@ -149,98 +149,4 @@ class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
             self.async_write_ha_state()
         else:
             _LOGGER.error(f"❌ No se pudo actualizar el SOC de carga para {self._account}")
-
-class WeekdayOctopusChargeSoc(CoordinatorEntity, SelectEntity):
-    """Entidad para seleccionar el SOC de carga del vehículo (Días de semana)."""
-
-    def __init__(self, account: str, coordinator):
-        super().__init__(coordinator)
-        self._account = account
-        self._attr_name = f"SOC de carga (Días de semana) ({account})"
-        self._attr_unique_id = f"octopus_charge_soc_weekday_{account}"
-        self._attr_options = [str(i) for i in range(0, 101, 5)]  # Opciones de SOC de 0 a 100, en pasos de 5
-        self._current_soc = None
-
-    async def async_added_to_hass(self) -> None:
-        """Actualiza el estado de la entidad cuando se agrega a Home Assistant."""
-        await super().async_added_to_hass()
-        self._handle_coordinator_update()
-
-    def _handle_coordinator_update(self) -> None:
-        """Actualiza el estado con los datos de carga del SOC para días de semana."""
-        preferences = self.coordinator.data.get(self._account, {}).get("preferences", {})
-        if preferences:
-            self._current_soc = preferences.get("weekdayTargetSoc", None)
-        self.async_write_ha_state()
-
-    @property
-    def current_option(self) -> str | None:
-        """Devuelve el SOC actualmente seleccionado para los días de semana."""
-        return str(self._current_soc) if self._current_soc is not None else None
-
-    async def async_select_option(self, option: str) -> None:
-        """Actualiza el SOC de carga en la API de Octopus para los días de semana."""
-        _LOGGER.info(f"🔄 Actualizando SOC de carga a {option}% para la cuenta {self._account} (Días de semana)")
-
-        # Llamada a la API para actualizar las preferencias de carga para días de semana
-        success = await self.coordinator._api.setVehicleChargePreferences(
-            account_number=self._account,
-            weekday_soc=int(option),  # Cambiar el SOC para los días de semana
-            weekend_soc=85,  # Fijo a 85% para fines de semana
-            weekday_time="09:00",  # Hora fija de carga
-            weekend_time="09:00",  # Hora fija de carga
-        )
-
-        if success:
-            self._current_soc = int(option)
-            self.async_write_ha_state()
-        else:
-            _LOGGER.error(f"❌ No se pudo actualizar el SOC de carga para {self._account} (Días de semana)")
-
-class WeekendOctopusChargeSoc(CoordinatorEntity, SelectEntity):
-    """Entidad para seleccionar el SOC de carga del vehículo (Fin de semana)."""
-
-    def __init__(self, account: str, coordinator):
-        super().__init__(coordinator)
-        self._account = account
-        self._attr_name = f"SOC de carga (Fin de semana) ({account})"
-        self._attr_unique_id = f"octopus_charge_soc_weekend_{account}"
-        self._attr_options = [str(i) for i in range(0, 101, 5)]  # Opciones de SOC de 0 a 100, en pasos de 5
-        self._current_soc = None
-
-    async def async_added_to_hass(self) -> None:
-        """Actualiza el estado de la entidad cuando se agrega a Home Assistant."""
-        await super().async_added_to_hass()
-        self._handle_coordinator_update()
-
-    def _handle_coordinator_update(self) -> None:
-        """Actualiza el estado con los datos de carga del SOC para fin de semana."""
-        preferences = self.coordinator.data.get(self._account, {}).get("preferences", {})
-        if preferences:
-            self._current_soc = preferences.get("weekendTargetSoc", None)
-        self.async_write_ha_state()
-
-    @property
-    def current_option(self) -> str | None:
-        """Devuelve el SOC actualmente seleccionado para fin de semana."""
-        return str(self._current_soc) if self._current_soc is not None else None
-
-    async def async_select_option(self, option: str) -> None:
-        """Actualiza el SOC de carga en la API de Octopus para fin de semana."""
-        _LOGGER.info(f"🔄 Actualizando SOC de carga a {option}% para la cuenta {self._account} (Fin de semana)")
-
-        # Llamada a la API para actualizar las preferencias de carga para fin de semana
-        success = await self.coordinator._api.setVehicleChargePreferences(
-            account_number=self._account,
-            weekday_soc=85,  # Fijo a 85% para días de semana
-            weekend_soc=int(option),  # Cambiar el SOC para el fin de semana
-            weekday_time="09:00",  # Hora fija de carga
-            weekend_time="09:00",  # Hora fija de carga
-        )
-
-        if success:
-            self._current_soc = int(option)
-            self.async_write_ha_state()
-        else:
-            _LOGGER.error(f"❌ No se pudo actualizar el SOC de carga para {self._account} (Fin de semana)")
 

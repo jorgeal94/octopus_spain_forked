@@ -515,3 +515,20 @@ class OctopusSpain:
           _LOGGER.error(f"⚠️ Error de red en setVehicleChargePreferences: {e}")
           return {"success": False, "errors": [str(e)]}
 
+    async def get_vehicle_charging_preferences(self, account_number: str):
+        """Obtiene las preferencias de carga del vehículo desde la API GraphQL."""
+        query = """
+        query vehicleChargingPreferences($accountNumber: String!) {
+            vehicleChargingPreferences(accountNumber: $accountNumber) {
+              weekdayTargetTime,
+              weekdayTargetSoc,
+              weekendTargetTime,
+              weekendTargetSoc
+            }
+        }
+        """
+        headers = {"authorization": self._token}
+        client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
+        response = await client.execute_async(query, {"accountNumber": account_number})
+        
+        return response.get("data", {}).get("vehicleChargingPreferences", None)
