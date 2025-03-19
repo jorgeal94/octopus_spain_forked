@@ -48,8 +48,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     for account in accounts:
         _LOGGER.info(f"📡 Creando selectores para la cuenta {account}")
         selects.append(OctopusChargeSchedule(account, intelligentcoordinator, len(accounts) == 1))
-        selects.append(OctopusChargeSoc(account, intelligentcoordinator, 0))
-        selects.append(OctopusChargeSoc(account, intelligentcoordinator, 1))
+        selects.append(OctopusChargeW(account, intelligentcoordinator, 0))
+        selects.append(OctopusChargeW(account, intelligentcoordinator, 1))
         #selects.append(WeekdayOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
         #selects.append(WeekendOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
         for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
@@ -113,7 +113,7 @@ class OctopusChargeSchedule(CoordinatorEntity, SelectEntity):
         else:
             _LOGGER.error(f"❌ No se pudo actualizar el horario de carga para {self._account}")
 
-class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
+class OctopusChargeW(CoordinatorEntity, SelectEntity):
     """Entidad para seleccionar el SOC de carga del vehículo."""
 
     def __init__(self, account: str, coordinator, is_weekend: bool = False):
