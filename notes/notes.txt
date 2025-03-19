@@ -199,3 +199,21 @@ no funciona, da:
     "setDevicePreferences": null
   }
 }
+
+
+mutation MyMutation($input: SmartFlexDevicePreferencesInput = {deviceId: "00000000-0002-4000-805e-0000000009c6", mode: CHARGE, unit: PERCENTAGE, schedules: {dayOfWeek: MONDAY, time: "09:00" , max: "85"}}) {
+  setDevicePreferences(input: $input) {
+    id
+  }
+}
+
+mutation vehicleChargingPreferences {
+  setVehicleChargePreferences(
+    input: {accountNumber: "A-D6AA7C06", weekdayTargetSoc: 85, weekendTargetSoc: 85, weekdayTargetTime: "09:00", weekendTargetTime: "09:00"}
+  ) {
+    __typename
+  }
+}
+  
+}
+

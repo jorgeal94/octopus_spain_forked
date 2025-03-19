@@ -193,6 +193,7 @@
     #     return True
 
 import logging
+import aiohttp
 from datetime import datetime, timedelta
 from python_graphql_client import GraphqlClient
 
@@ -460,6 +461,44 @@ class OctopusSpain:
         response = await client.execute_async(query, {"accountNumber": account_number})
 
         return response.get("data", {}).get("registeredKrakenflexDevice", None)
+
+    async def set_vehicle_charge_preferences(
+        self, account_number: str, weekday_soc: int, weekend_soc: int, 
+        weekday_time: str, weekend_time: str
+    ):
+        """Envía las preferencias de carga del vehículo a la API de Octopus."""
+        mutation = """
+        mutation vehicleChargingPreferences($input: SetVehicleChargePreferencesInput!) {
+          setVehicleChargePreferences(input: $input) {
+            __typename
+          }
+        }
+        """
+        variables = {
+            "input": {
+                "accountNumber": account_number,
+                "weekdayTargetSoc": weekday_soc,
+                "weekendTargetSoc": weekend_soc,
+                "weekdayTargetTime": weekday_time,
+                "weekendTargetTime": weekend_time,
+            }
+        }
+
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                "Authorization": f"Bearer {self._token}",  # Verifica que `self.auth_token` esté correctamente definido
+                "Content-Type": "application/json"
+            }
+            async with session.post(
+                "https://api.octopus.energy/graphql/",
+                json={"query": mutation, "variables": variables},
+                headers=headers,
+            ) as response:
+                data = await response.json()
+                if "errors" in data:
+                    return {"success": False, "errors": data["errors"]}
+                return data.get("data", {}).get("setVehicleChargePreferences", {})
+
 
     
     
