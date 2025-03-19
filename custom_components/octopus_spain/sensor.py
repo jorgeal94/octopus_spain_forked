@@ -6,7 +6,7 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, CoordinatorEntity
 from .const import (
     CONF_PASSWORD,
-    CONF_EMAIL, UPDATE_INTERVAL
+    CONF_EMAIL, UPDATE_INTERVAL, DOMAIN
 )
 
 from homeassistant.components.sensor import (

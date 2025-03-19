@@ -7,7 +7,7 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .const import CONF_EMAIL, CONF_PASSWORD
+from .const import CONF_EMAIL, CONF_PASSWORD, DOMAIN
 from .coordinator import OctopusIntelligentCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,7 +32,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     selects = []
 
     # ✅ Usa el coordinador ya creado en `__init__.py`  
-    intelligentcoordinator = hass.data["octopus_spain"]["intelligent_coordinator"]
+    #intelligentcoordinator = hass.data["octopus_spain"]["intelligent_coordinator"]
+    #await intelligentcoordinator.async_config_entry_first_refresh()
+    # 🔹 Esperar a que el coordinador se inicialice en __init__.py
+    if DOMAIN not in hass.data or "intelligent_coordinator" not in hass.data[DOMAIN]:
+        _LOGGER.error("❌ intelligent_coordinator no está disponible en hass.data")
+        return
+
+    intelligentcoordinator = hass.data[DOMAIN]["intelligent_coordinator"]
     await intelligentcoordinator.async_config_entry_first_refresh()
 
     _LOGGER.info(f"📊 Datos obtenidos en el coordinador: {intelligentcoordinator.data}")
