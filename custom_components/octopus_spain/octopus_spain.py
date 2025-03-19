@@ -462,7 +462,7 @@ class OctopusSpain:
 
         return response.get("data", {}).get("registeredKrakenflexDevice", None)
 
-    async def set_vehicle_charge_preferences(
+    async def setVehicleChargePreferences(
         self, account_number: str, weekday_soc: int, weekend_soc: int, 
         weekday_time: str, weekend_time: str
     ):

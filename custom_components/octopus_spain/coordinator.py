@@ -46,6 +46,31 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
             _LOGGER.info(f"📊 Datos obtenidos y almacenados: {self._data}")
 
         return self._data
+    
+    async def set_vehicle_charge_preferences(self, account_number: str, weekday_target_time: str, weekend_target_time: str) -> bool:
+        """Actualiza las preferencias de carga del vehículo en la API de Octopus."""
+        _LOGGER.info(f"🚗 Enviando nueva configuración de carga para {account_number}: {weekday_target_time} / {weekend_target_time}")
+    
+        try:
+            response = await self._api.setVehicleChargePreferences(
+                accountNumber=account_number,
+                weekdayTargetSoc=85,  # Puedes hacer que estos valores sean configurables
+                weekendTargetSoc=85,
+                weekdayTargetTime=weekday_target_time,
+                weekendTargetTime=weekend_target_time,
+            )
+    
+            if response:
+                _LOGGER.info(f"✅ Preferencias de carga actualizadas correctamente para {account_number}")
+                await self.async_request_refresh()  # Recargar datos después del cambio
+                return True
+            else:
+                _LOGGER.error(f"❌ Error al actualizar las preferencias de carga para {account_number}")
+                return False
+    
+        except Exception as e:
+            _LOGGER.error(f"❌ Excepción en `set_vehicle_charge_preferences`: {e}")
+            return False
 
 
 class OctopusHourlyCoordinator(DataUpdateCoordinator):
