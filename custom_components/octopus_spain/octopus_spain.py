@@ -463,42 +463,47 @@ class OctopusSpain:
         return response.get("data", {}).get("registeredKrakenflexDevice", None)
 
     async def setVehicleChargePreferences(
-        self, account_number: str, weekday_soc: int, weekend_soc: int, 
-        weekday_time: str, weekend_time: str
-    ):
-        """Envía las preferencias de carga del vehículo a la API de Octopus."""
-        mutation = """
-        mutation vehicleChargingPreferences($input: SetVehicleChargePreferencesInput!) {
-          setVehicleChargePreferences(input: $input) {
-            __typename
+      self, account_number: str, weekday_soc: int, weekend_soc: int, 
+      weekday_time: str, weekend_time: str
+):  
+      """Envía las preferencias de carga del vehículo a la API de Octopus."""
+      mutation = """
+      mutation vehicleChargingPreferences($input: SetVehicleChargePreferencesInput!) {
+        setVehicleChargePreferences(input: $input) {
+          __typename
+        }
+      }
+      """
+      variables = {
+          "input": {
+              "accountNumber": account_number,
+              "weekdayTargetSoc": weekday_soc,
+              "weekendTargetSoc": weekend_soc,
+              "weekdayTargetTime": weekday_time,
+              "weekendTargetTime": weekend_time,
           }
-        }
-        """
-        variables = {
-            "input": {
-                "accountNumber": account_number,
-                "weekdayTargetSoc": weekday_soc,
-                "weekendTargetSoc": weekend_soc,
-                "weekdayTargetTime": weekday_time,
-                "weekendTargetTime": weekend_time,
-            }
-        }
-
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                "authorization": self._token,  # Verifica que `self.auth_token` esté correctamente definido
-                "Content-Type": "application/json"
-            }
-            async with session.post(
-                "https://api.octopus.energy/graphql/",
-                json={"query": mutation, "variables": variables},
-                headers=headers,
-            ) as response:
-                data = await response.json()
-                if "errors" in data:
-                    return {"success": False, "errors": data["errors"]}
-                return data.get("data", {}).get("setVehicleChargePreferences", {})
-
-
-    
-    
+      }
+  
+      headers = {
+          "Authorization": f"Bearer {self._token}",  # Asegúrate de que `self._token` esté correctamente definido
+          "Content-Type": "application/json"
+      }
+  
+      # Usamos el mismo esquema que en `login` con `GraphqlClient`
+      client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
+      
+      try:
+          response = await client.execute_async(mutation, variables)
+  
+          if "errors" in response:
+              _LOGGER.error(f"❌ Error al establecer preferencias de carga: {response['errors']}")
+              return {"success": False, "errors": response["errors"]}
+  
+          _LOGGER.info("✅ Preferencias de carga del vehículo actualizadas correctamente.")
+          return response.get("data", {}).get("setVehicleChargePreferences", {})
+  
+      except aiohttp.ClientError as e:
+          _LOGGER.error(f"⚠️ Error de red en setVehicleChargePreferences: {e}")
+          return {"success": False, "errors": [str(e)]}
+      
+      
