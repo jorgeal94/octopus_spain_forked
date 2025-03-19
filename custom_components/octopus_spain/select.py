@@ -53,8 +53,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         #selects.append(WeekdayOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
         #selects.append(WeekendOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
         for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
-            selects.append(OctopusChargeTime(account, intelligentcoordinator, day))
-            selects.append(OctopusChargeSoc(account, intelligentcoordinator, day))
+            selects.append(OctopusChargeTime1(account, intelligentcoordinator, day))
+            selects.append(OctopusChargeSoc1(account, intelligentcoordinator, day))
 
     if selects:
         async_add_entities(selects)
@@ -171,7 +171,7 @@ class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
             _LOGGER.error(f"❌ No se pudo actualizar el SOC de carga para {self._account}")
 
 
-class OctopusChargeTime(CoordinatorEntity, SelectEntity):
+class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
     """Selector para elegir la hora de carga por día de la semana."""
 
     def __init__(self, account: str, coordinator, day: str):
@@ -230,7 +230,7 @@ class OctopusChargeTime(CoordinatorEntity, SelectEntity):
             _LOGGER.error(f"❌ No se pudo actualizar la hora de carga para {self._day}")
 
 
-class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
+class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
     """Selector para elegir el SOC máximo por día de la semana."""
 
     def __init__(self, account: str, coordinator, day: str):
