@@ -275,7 +275,7 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
                 "max": max_soc if day == self._day else self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", {}).get(day, {}).get("max", "90"),
             })
 
-        success = await self.coordinator._api.setDevicePreferences({
+        success = await self.coordinator._api.set_device_preferences({
             "deviceId": "00000000-0002-4000-805e-0000000009c6",
             "mode": "CHARGE",
             "unit": "PERCENTAGE",
