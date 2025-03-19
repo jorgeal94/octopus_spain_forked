@@ -149,7 +149,10 @@ class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
         if success:
             self._current_soc = int(option)
             self.async_write_ha_state()
-            self._handle_coordinator_update()
+            
+            # 🔄 FORZAR actualización del coordinador para que los sensores reflejen el cambio de inmediato
+            await self.coordinator.async_request_refresh()
+
         else:
             _LOGGER.error(f"❌ No se pudo actualizar el SOC de carga para {self._account}")
 
