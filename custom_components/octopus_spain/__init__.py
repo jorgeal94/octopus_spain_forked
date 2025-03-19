@@ -60,25 +60,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     email = entry.data[CONF_EMAIL]
     password = entry.data[CONF_PASSWORD]
 
-    coordinator = OctopusIntelligentCoordinator(hass, email, password)
+    # coordinator = OctopusIntelligentCoordinator(hass, email, password)
     
-    try:
-        _LOGGER.info("⏳ Llamando a `async_config_entry_first_refresh()`")
-        await coordinator.async_config_entry_first_refresh()
-        _LOGGER.info("✅ `async_config_entry_first_refresh()` completado")
-    except Exception as e:
-        _LOGGER.error(f"❌ ERROR en `async_config_entry_first_refresh()`: {e}")
-        raise ConfigEntryNotReady from e  # ✅ Ahora Home Assistant sabe que no debe cargar todavía
+    # try:
+    #     _LOGGER.info("⏳ Llamando a `async_config_entry_first_refresh()`")
+    #     await coordinator.async_config_entry_first_refresh()
+    #     _LOGGER.info("✅ `async_config_entry_first_refresh()` completado")
+    # except Exception as e:
+    #     _LOGGER.error(f"❌ ERROR en `async_config_entry_first_refresh()`: {e}")
+    #     raise ConfigEntryNotReady from e  # ✅ Ahora Home Assistant sabe que no debe cargar todavía
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    # hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    _LOGGER.info(f"📌 Coordinador almacenado en hass.data[DOMAIN][{entry.entry_id}]")
+    # _LOGGER.info(f"📌 Coordinador almacenado en hass.data[DOMAIN][{entry.entry_id}]")
 
-    # Configurar plataformas de integración
-    _LOGGER.info(f"📡 Configurando plataformas de integración: {PLATFORMS}")
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    )
+    # # Configurar plataformas de integración
+    # _LOGGER.info(f"📡 Configurando plataformas de integración: {PLATFORMS}")
+    # hass.async_create_task(
+    #     hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # )
+
+    # 📌 Solo se crean los coordinadores una vez y se almacenan en hass.data
+    if DOMAIN not in hass.data:
+        hass.data[DOMAIN] = {}
+
+    if "intelligent_coordinator" not in hass.data[DOMAIN]:
+        hass.data[DOMAIN]["intelligent_coordinator"] = OctopusIntelligentCoordinator(hass, email, password)
+        await hass.data[DOMAIN]["intelligent_coordinator"].async_config_entry_first_refresh()
+
 
     return True
 
