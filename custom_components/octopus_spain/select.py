@@ -118,7 +118,7 @@ class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Actualiza el estado con los datos de carga del SOC."""
-        preferences = self.coordinator.data.get(self._account, {}).get("preferences", {})
+        preferences = self.coordinator.data.get(self._account, {}).get("vehicle_charging_prefs", {})
         if preferences:
             if self._is_weekend:
                 self._current_soc = preferences.get("weekendTargetSoc", None)
@@ -135,13 +135,15 @@ class OctopusChargeSoc(CoordinatorEntity, SelectEntity):
         """Actualiza el SOC de carga en la API de Octopus."""
         _LOGGER.info(f"🔄 Actualizando SOC de carga a {option}% para la cuenta {self._account}")
 
+        preferences = self.coordinator.data.get(self._account, {}).get("vehicle_charging_prefs", {})
+
         # Llamada a la API para actualizar las preferencias de carga
         success = await self.coordinator._api.setVehicleChargePreferences(
             account_number=self._account,
-            weekday_soc=int(option) if not self._is_weekend else 85,  # Fijo a 85% para fines de semana
-            weekend_soc=int(option) if self._is_weekend else 85,  # Fijo a 85% para días de semana
-            weekday_time="09:00",  # Hora fija de carga
-            weekend_time="09:00",  # Hora fija de carga
+            weekday_soc=int(option) if not self._is_weekend else preferences.get("weekdayTargetSoc", None),  # Fijo a 85% para fines de semana
+            weekend_soc=int(option) if self._is_weekend else preferences.get("weekendTargetSoc", None),  # Fijo a 85% para días de semana
+            weekday_time=preferences.get("weekdayTargetTime", None),  # Hora fija de carga
+            weekend_time=preferences.get("weekendTargetTime", None),  # Hora fija de carga
         )
 
         if success:
