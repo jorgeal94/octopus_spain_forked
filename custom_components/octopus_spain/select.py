@@ -40,9 +40,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     for account in accounts:
         _LOGGER.info(f"📡 Creando selectores para la cuenta {account}")
         selects.append(OctopusChargeSchedule(account, intelligentcoordinator, len(accounts) == 1))
-        selects.append(OctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
-        selects.append(WeekdayOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
-        selects.append(WeekendOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
+        selects.append(OctopusChargeSoc(account, intelligentcoordinator, 0))
+        selects.append(OctopusChargeSoc(account, intelligentcoordinator, 1))
+        #selects.append(WeekdayOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
+        #selects.append(WeekendOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
 
     if selects:
         async_add_entities(selects)
