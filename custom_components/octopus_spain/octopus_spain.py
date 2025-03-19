@@ -390,51 +390,56 @@ class OctopusSpain:
         }
 
 
-    async def set_device_preferences(self, account_id: str, device_id: str, mode: str, schedules: list, unit: str):
-        """Configura las preferencias del dispositivo con la nueva mutación GraphQL."""
-        if not self.token:
-            if not await self.login():
-                return False
+    async def set_device_preferences(
+      self, device_id: str, mode: str, schedules: list, unit: str
+    ):  
+      """Configura las preferencias del dispositivo con la nueva mutación GraphQL."""
 
-        url = "https://api.octopus.energy/v1/graphql"
-        headers = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
+      # Verificar si el token está disponible, si no, intentar iniciar sesión
+      if not self.token:
+          _LOGGER.error("❌ No se ha obtenido un token válido. Intentando login...")
+          login_successful = await self.login()
+          if not login_successful:
+              _LOGGER.error("❌ No se pudo obtener el token. Abortando operación.")
+              return {"success": False, "errors": ["No se pudo obtener el token de autenticación."]}
+
+      mutation = """
+      mutation SetDevicePreferences($input: DevicePreferencesInput!) {
+        setDevicePreferences(input: $input) {
+          __typename
         }
+      }
+      """
 
-        mutation = """
-        mutation SetDevicePreferences($deviceId: String!, $mode: String!, $schedules: [ScheduleInput!]!, $unit: String!) {
-          setDevicePreferences(
-            input: {deviceId: $deviceId, mode: $mode, schedules: $schedules, unit: $unit}
-          ) {
-            id
-            ... on SmartFlexVehicle {
-              id
-              model
-              make
-              status
-            }
+      variables = {
+          "input": {
+              "deviceId": device_id,
+              "mode": mode,
+              "schedules": schedules,
+              "unit": unit,
           }
-        }
-        """
+      }
 
-        variables = {
-            "deviceId": device_id,
-            "mode": mode,
-            "schedules": schedules,
-            "unit": unit
-        }
+      headers = {
+          "authorization": self._token,  # Asegúrate de que `self._token` esté correctamente definido
+          "Content-Type": "application/json"
+      }
 
-        payload = {
-            "query": mutation,
-            "variables": variables
-        }
+      client = GraphqlClient(endpoint="https://api.octopus.energy/v1/graphql", headers=headers)
 
-        async with self.session.post(url, json=payload, headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                return "data" in data and data["data"].get("setDevicePreferences") is not None
-        return False
+      try:
+          response = await client.execute_async(mutation, variables)
+
+          if "errors" in response:
+              _LOGGER.error(f"❌ Error al establecer preferencias de dispositivo: {response['errors']}")
+              return {"success": False, "errors": response["errors"]}
+
+          _LOGGER.info("✅ Preferencias del dispositivo actualizadas correctamente.")
+          return response.get("data", {}).get("setDevicePreferences", {})
+
+      except aiohttp.ClientError as e:
+          _LOGGER.error(f"⚠️ Error de red en set_device_preferences: {e}")
+          return {"success": False, "errors": [str(e)]}
     
     async def registered_krakenflex_device(self, account_number: str):
         """Consulta los dispositivos registrados en Krakenflex."""

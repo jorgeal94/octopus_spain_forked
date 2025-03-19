@@ -217,7 +217,6 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
             })
 
         success = await self.coordinator._api.set_device_preferences(
-            account_id=self._account,
             device_id= "00000000-0002-4000-805e-0000000009c6",
             mode= "CHARGE",
             unit= "PERCENTAGE",
@@ -277,7 +276,6 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
             })
 
         success = await self.coordinator._api.set_device_preferences(
-            account_id=self._account,
             device_id= "00000000-0002-4000-805e-0000000009c6",
             mode= "CHARGE",
             unit= "PERCENTAGE",
