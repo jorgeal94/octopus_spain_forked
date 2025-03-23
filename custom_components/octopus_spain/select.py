@@ -98,8 +98,8 @@ class OctopusChargeSchedule(CoordinatorEntity, SelectEntity):
         # Simulación de una llamada a la API para actualizar la configuración
         success = await self.coordinator._api.setVehicleChargePreferences(
             account_number=self._account,
-            weekday_soc=85,  # Fijo en 85% por ahora
-            weekend_soc=85,
+            weekday_soc=80,  # Fijo en 85% por ahora
+            weekend_soc=80,
             weekday_time=option,
             weekend_time=option,
         )
@@ -207,6 +207,12 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
         await self._update_charge_preferences(time=option)
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
+        # Obtener device_id desde self.coordinator.data
+        device_id = self.coordinator.data.get(self._account, {}).get("device_id")
+        if not device_id:
+            _LOGGER.error("❌ No se encontró device_id en los datos del coordinador.")
+            return
+        
         """Llama a la API para actualizar los valores de carga."""
         schedules = []
         for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
@@ -217,7 +223,7 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
             })
 
         success = await self.coordinator._api.set_device_preferences(
-            device_id= "00000000-0002-4000-805e-0000000009c6",
+            device_id= device_id,
             mode= "CHARGE",
             unit= "PERCENTAGE",
             schedules= schedules,
@@ -266,6 +272,11 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
         await self._update_charge_preferences(max_soc=option)
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
+         # Obtener device_id desde self.coordinator.data
+        device_id = self.coordinator.data.get(self._account, {}).get("device_id")
+        if not device_id:
+            _LOGGER.error("❌ No se encontró device_id en los datos del coordinador.")
+            return
         """Llama a la API para actualizar los valores de carga."""
         schedules = []
         for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
@@ -276,7 +287,7 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
             })
 
         success = await self.coordinator._api.set_device_preferences(
-            device_id= "00000000-0002-4000-805e-0000000009c6",
+            device_id= device_id,
             mode= "CHARGE",
             unit= "PERCENTAGE",
             schedules= schedules,
