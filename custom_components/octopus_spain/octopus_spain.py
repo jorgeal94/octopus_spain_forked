@@ -396,7 +396,7 @@ class OctopusSpain:
       """Configura las preferencias del dispositivo con la nueva mutación GraphQL."""
 
       # Verificar si el token está disponible, si no, intentar iniciar sesión
-      if not self.token:
+      if not self._token:
           _LOGGER.error("❌ No se ha obtenido un token válido. Intentando login...")
           login_successful = await self.login()
           if not login_successful:
