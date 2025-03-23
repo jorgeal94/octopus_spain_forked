@@ -190,11 +190,12 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Obtiene el horario actual desde la API."""
-        schedules = self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", [])
+        schedules = self.coordinator.data.get(self._account, {}).get("devices", [{}])[0].get("preferences", {}).get("schedules", [])
         for schedule in schedules:
             if schedule["dayOfWeek"] == self._day:
                 self._current_time = schedule["time"]
         self.async_write_ha_state()
+        
 
     @property
     def current_option(self) -> str | None:
@@ -205,6 +206,8 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
         """Actualiza la hora de carga y llama a la API."""
         _LOGGER.info(f"🔄 Actualizando hora de carga para {self._day}: {option}")
         await self._update_charge_preferences(time=option)
+        # 🔄 FORZAR actualización del coordinador para que los sensores reflejen el cambio de inmediato
+        await self.coordinator.async_request_refresh()
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
         """Llama a la API para actualizar los valores de carga."""
@@ -226,8 +229,18 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
         for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
             schedules.append({
                 "dayOfWeek": day,
-                "time": time if day == self._day else self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", {}).get(day, {}).get("time", "09:00"),
-                "max": max_soc if day == self._day else self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", {}).get(day, {}).get("max", "90"),
+                "time": time if day == self._day else next(
+                    (sched["time"] for sched in self.coordinator.data.get(self._account, {})
+                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
+                     .get("preferences", {}).get("schedules", []) 
+                     if sched["dayOfWeek"] == day),
+                    "08:00"),
+                "max": max_soc if day == self._day else next(
+                    (sched["max"] for sched in self.coordinator.data.get(self._account, {})
+                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
+                     .get("preferences", {}).get("schedules", []) 
+                     if sched["dayOfWeek"] == day),
+                    "80"),    
             })
 
         success = await self.coordinator._api.set_device_preferences(
@@ -263,7 +276,7 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Obtiene el SOC actual desde la API."""
-        schedules = self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", [])
+        schedules = self.coordinator.data.get(self._account, {}).get("devices", [{}])[0].get("preferences", {}).get("schedules", [])
         for schedule in schedules:
             if schedule["dayOfWeek"] == self._day:
                 self._current_soc = schedule["max"]
@@ -278,6 +291,8 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
         """Actualiza el SOC máximo y llama a la API."""
         _LOGGER.info(f"🔄 Actualizando SOC de carga para {self._day}: {option}%")
         await self._update_charge_preferences(max_soc=option)
+        # 🔄 FORZAR actualización del coordinador para que los sensores reflejen el cambio de inmediato
+        await self.coordinator.async_request_refresh()
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
         """Llama a la API para actualizar los valores de carga."""
@@ -300,8 +315,18 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
         for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
             schedules.append({
                 "dayOfWeek": day,
-                "time": time if day == self._day else self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", {}).get(day, {}).get("time", "09:00"),
-                "max": max_soc if day == self._day else self.coordinator.data.get(self._account, {}).get("device_preferences", {}).get("schedules", {}).get(day, {}).get("max", "90"),
+                "time": time if day == self._day else next(
+                    (sched["time"] for sched in self.coordinator.data.get(self._account, {})
+                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
+                     .get("preferences", {}).get("schedules", []) 
+                     if sched["dayOfWeek"] == day),
+                    "08:00"),
+                "max": max_soc if day == self._day else next(
+                    (sched["max"] for sched in self.coordinator.data.get(self._account, {})
+                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
+                     .get("preferences", {}).get("schedules", []) 
+                     if sched["dayOfWeek"] == day),
+                    "80"),
             })
 
         success = await self.coordinator._api.set_device_preferences(
