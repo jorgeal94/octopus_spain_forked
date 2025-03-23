@@ -207,13 +207,21 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
         await self._update_charge_preferences(time=option)
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
-        # Obtener device_id desde self.coordinator.data
-        device_id = self.coordinator.data.get(self._account, {}).get("device_id")
-        if not device_id:
-            _LOGGER.error("❌ No se encontró device_id en los datos del coordinador.")
-            return
-        
         """Llama a la API para actualizar los valores de carga."""
+
+        # Obtener lista de dispositivos
+        devices = self.coordinator.data.get(self._account, {}).get("devices", [])
+
+        if not devices:
+            _LOGGER.error("❌ No se encontraron dispositivos en los datos del coordinador.")
+            return
+
+        # Tomar el primer dispositivo (o modificar la lógica si hay más de uno)
+        device_id = devices[0].get("id") if devices else None
+
+        if not device_id:
+            _LOGGER.error("❌ No se encontró un ID de dispositivo válido.")
+            return
         schedules = []
         for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
             schedules.append({
@@ -272,12 +280,22 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
         await self._update_charge_preferences(max_soc=option)
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
-         # Obtener device_id desde self.coordinator.data
-        device_id = self.coordinator.data.get(self._account, {}).get("device_id")
-        if not device_id:
-            _LOGGER.error("❌ No se encontró device_id en los datos del coordinador.")
-            return
         """Llama a la API para actualizar los valores de carga."""
+        
+        # Obtener lista de dispositivos
+        devices = self.coordinator.data.get(self._account, {}).get("devices", [])
+    
+        if not devices:
+            _LOGGER.error("❌ No se encontraron dispositivos en los datos del coordinador.")
+            return
+    
+        # Tomar el primer dispositivo (o modificar la lógica si hay más de uno)
+        device_id = devices[0].get("id") if devices else None
+    
+        if not device_id:
+            _LOGGER.error("❌ No se encontró un ID de dispositivo válido.")
+            return
+        
         schedules = []
         for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
             schedules.append({
