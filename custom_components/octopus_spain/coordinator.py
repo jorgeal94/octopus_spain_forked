@@ -1,5 +1,3 @@
-# """Coordinator for Octopus Spain integration."""
-
 import logging
 from datetime import timedelta
 from homeassistant.core import HomeAssistant
@@ -75,11 +73,16 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
             return False
 
     async def boost_charge(self, account_number: str):
-    """Función para ser llamada desde el servicio de Home Assistant."""
-    success = await self._api.trigger_boost_charge(account_number)
-    if success:
-        await self.async_request_refresh() # Forzamos la actualización para ver el cambio de estado
-    return success
+        """Función para ser llamada desde el servicio de Home Assistant."""
+        _LOGGER.info(f"⚡ Intentando activar la carga inmediata para la cuenta {account_number}")
+        success = await self._api.trigger_boost_charge(account_number)
+        if success:
+            _LOGGER.info(f"✅ Carga inmediata activada para la cuenta {account_number}")
+            await self.async_request_refresh() # Forzamos la actualización para ver el cambio de estado
+        else:
+            _LOGGER.error(f"❌ Fallo al activar la carga inmediata para la cuenta {account_number}")
+        return success
+
 
 class OctopusHourlyCoordinator(DataUpdateCoordinator):
     """Coordinator para actualizar datos cada hora."""
