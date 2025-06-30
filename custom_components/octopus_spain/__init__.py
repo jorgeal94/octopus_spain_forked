@@ -45,7 +45,7 @@ from .coordinator import OctopusIntelligentCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-PLATFORMS: list[Platform] = [Platform.SENSOR,Platform.SELECT]
+PLATFORMS: list[Platform] = [Platform.SENSOR,Platform.SELECT,Platform.BUTTON]
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Octopus Spain component."""
