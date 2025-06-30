@@ -31,10 +31,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     selects = []
 
-    # ✅ Usa el coordinador ya creado en `__init__.py`  
-    #intelligentcoordinator = hass.data["octopus_spain"]["intelligent_coordinator"]
-    #await intelligentcoordinator.async_config_entry_first_refresh()
-    # 🔹 Esperar a que el coordinador se inicialice en __init__.py
     if DOMAIN not in hass.data or "intelligent_coordinator" not in hass.data[DOMAIN]:
         _LOGGER.error("❌ intelligent_coordinator no está disponible en hass.data")
         return
@@ -50,8 +46,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         selects.append(OctopusChargeSchedule(account, intelligentcoordinator, len(accounts) == 1))
         selects.append(OctopusChargeW(account, intelligentcoordinator, 0))
         selects.append(OctopusChargeW(account, intelligentcoordinator, 1))
-        #selects.append(WeekdayOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
-        #selects.append(WeekendOctopusChargeSoc(account, intelligentcoordinator, len(accounts) == 1))
         for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
             selects.append(OctopusChargeTime1(account, intelligentcoordinator, day))
             selects.append(OctopusChargeSoc1(account, intelligentcoordinator, day))
@@ -95,10 +89,9 @@ class OctopusChargeSchedule(CoordinatorEntity, SelectEntity):
         """Actualiza el horario de carga en la API."""
         _LOGGER.info(f"🔄 Actualizando horario de carga a {option} para la cuenta {self._account}")
 
-        # Simulación de una llamada a la API para actualizar la configuración
         success = await self.coordinator._api.setVehicleChargePreferences(
             account_number=self._account,
-            weekday_soc=80,  # Fijo en 85% por ahora
+            weekday_soc=80,
             weekend_soc=80,
             weekday_time=option,
             weekend_time=option,
@@ -107,9 +100,7 @@ class OctopusChargeSchedule(CoordinatorEntity, SelectEntity):
         if success:
             self._current_schedule = option
             self.async_write_ha_state()
-              # 🔄 FORZAR actualización del coordinador para que los sensores reflejen el cambio de inmediato
             await self.coordinator.async_request_refresh()
-
         else:
             _LOGGER.error(f"❌ No se pudo actualizar el horario de carga para {self._account}")
 
@@ -122,11 +113,10 @@ class OctopusChargeW(CoordinatorEntity, SelectEntity):
         self._is_weekend = is_weekend
         self._attr_name = f"SOC de carga ({account})" if not is_weekend else f"SOC de carga (Fin de semana) ({account})"
         self._attr_unique_id = f"octopus_charge_soc_{account}_weekend" if is_weekend else f"octopus_charge_soc_{account}"
-        self._attr_options = [str(i) for i in range(0, 101, 5)]  # Opciones de SOC de 0 a 100, en pasos de 5
+        self._attr_options = [str(i) for i in range(0, 101, 5)]
         self._current_soc = None
 
     async def async_added_to_hass(self) -> None:
-        """Actualiza el estado de la entidad cuando se agrega a Home Assistant."""
         await super().async_added_to_hass()
         self._handle_coordinator_update()
 
@@ -142,7 +132,6 @@ class OctopusChargeW(CoordinatorEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        """Devuelve el SOC actualmente seleccionado."""
         return str(self._current_soc) if self._current_soc is not None else None
 
     async def async_select_option(self, option: str) -> None:
@@ -151,22 +140,18 @@ class OctopusChargeW(CoordinatorEntity, SelectEntity):
 
         preferences = self.coordinator.data.get(self._account, {}).get("vehicle_charging_prefs", {})
 
-        # Llamada a la API para actualizar las preferencias de carga
         success = await self.coordinator._api.setVehicleChargePreferences(
             account_number=self._account,
-            weekday_soc=int(option) if not self._is_weekend else preferences.get("weekdayTargetSoc", None),  # Fijo a 85% para fines de semana
-            weekend_soc=int(option) if self._is_weekend else preferences.get("weekendTargetSoc", None),  # Fijo a 85% para días de semana
-            weekday_time=preferences.get("weekdayTargetTime", None),  # Hora fija de carga
-            weekend_time=preferences.get("weekendTargetTime", None),  # Hora fija de carga
+            weekday_soc=int(option) if not self._is_weekend else preferences.get("weekdayTargetSoc", None),
+            weekend_soc=int(option) if self._is_weekend else preferences.get("weekendTargetSoc", None),
+            weekday_time=preferences.get("weekdayTargetTime", None),
+            weekend_time=preferences.get("weekendTargetTime", None),
         )
 
         if success:
             self._current_soc = int(option)
             self.async_write_ha_state()
-            
-            # 🔄 FORZAR actualización del coordinador para que los sensores reflejen el cambio de inmediato
             await self.coordinator.async_request_refresh()
-
         else:
             _LOGGER.error(f"❌ No se pudo actualizar el SOC de carga para {self._account}")
 
@@ -177,14 +162,13 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
     def __init__(self, account: str, coordinator, day: str):
         super().__init__(coordinator)
         self._account = account
-        self._day = day.upper()  # Ejemplo: "MONDAY"
+        self._day = day.upper()
         self._attr_name = f"Hora de carga ({day.capitalize()})"
         self._attr_unique_id = f"octopus_charge_time_{account}_{day.lower()}"
-        self._attr_options = [f"{h:02d}:00" for h in range(24)]  # Opciones de 00:00 a 23:00
+        self._attr_options = [f"{h:02d}:00" for h in range(24)]
         self._current_time = None
 
     async def async_added_to_hass(self) -> None:
-        """Carga el estado al añadir la entidad."""
         await super().async_added_to_hass()
         self._handle_coordinator_update()
 
@@ -196,67 +180,48 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
                 self._current_time = schedule["time"]
         self.async_write_ha_state()
         
-
     @property
     def current_option(self) -> str | None:
-        """Devuelve la hora de carga actual."""
         return self._current_time
 
     async def async_select_option(self, option: str) -> None:
         """Actualiza la hora de carga y llama a la API."""
         _LOGGER.info(f"🔄 Actualizando hora de carga para {self._day}: {option}")
         await self._update_charge_preferences(time=option)
-        # 🔄 FORZAR actualización del coordinador para que los sensores reflejen el cambio de inmediato
         await self.coordinator.async_request_refresh()
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
-    """Llama a la API para actualizar los valores de carga."""
+        """Llama a la API para actualizar los valores de carga."""
+        devices = self.coordinator.data.get(self._account, {}).get("devices", [])
+        if not devices:
+            _LOGGER.error("❌ No se encontraron dispositivos en los datos del coordinador.")
+            return
 
-    # Obtener lista de dispositivos
-    devices = self.coordinator.data.get(self._account, {}).get("devices", [])
+        device_id = devices[0].get("id") if devices else None
+        if not device_id:
+            _LOGGER.error("❌ No se encontró un ID de dispositivo válido.")
+            return
 
-    if not devices:
-        _LOGGER.error("❌ No se encontraron dispositivos en los datos del coordinador.")
-        return
+        current_schedules = devices[0].get("preferences", {}).get("schedules", [])
+        schedules = []
+        for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
+            current_schedule_for_day = next((sched for sched in current_schedules if sched["dayOfWeek"] == day), None)
+            
+            day_time = time if day == self._day and time is not None else (current_schedule_for_day['time'] if current_schedule_for_day else "08:00")
+            day_soc = max_soc if day == self._day and max_soc is not None else (current_schedule_for_day['max'] if current_schedule_for_day else "80")
 
-    # Tomar el primer dispositivo (o modificar la lógica si hay más de uno)
-    device_id = devices[0].get("id") if devices else None
+            schedules.append({"dayOfWeek": day, "time": day_time, "max": day_soc})
 
-    if not device_id:
-        _LOGGER.error("❌ No se encontró un ID de dispositivo válido.")
-        return
+        success = await self.coordinator._api.set_device_preferences(
+            device_id=device_id, mode="CHARGE", unit="PERCENTAGE", schedules=schedules
+        )
 
-    # Obtenemos los horarios actuales para no perderlos
-    current_schedules = self.coordinator.data.get(self._account, {}).get("devices", [{}])[0].get("preferences", {}).get("schedules", [])
-
-    schedules = []
-    for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
-        # Buscamos el horario actual para este día
-        current_schedule_for_day = next((sched for sched in current_schedules if sched["dayOfWeek"] == day), None)
-
-        # Si estamos actualizando el día actual, usamos los nuevos valores. Si no, los existentes.
-        schedules.append({
-            "dayOfWeek": day,
-            "time": time if day == self._day and time is not None else (current_schedule_for_day["time"] if current_schedule_for_day else "08:00"),
-            "max": max_soc if day == self._day and max_soc is not None else (current_schedule_for_day["max"] if current_schedule_for_day else "80"),
-        })
-
-    success = await self.coordinator._api.set_device_preferences(
-        device_id=device_id,
-        mode="CHARGE",
-        unit="PERCENTAGE",
-        schedules=schedules,
-    )
-
-    if success:
-        # Actualizamos el estado localmente si la llamada a la API fue exitosa
-        if time is not None:
-            self._current_time = time
-        if max_soc is not None:
-            self._current_soc = int(max_soc)
-        self.async_write_ha_state()
-    else:
-        _LOGGER.error(f"❌ No se pudo actualizar las preferencias de carga para {self._day}")
+        if success:
+            if time is not None:
+                self._current_time = time
+            self.async_write_ha_state()
+        else:
+            _LOGGER.error(f"❌ No se pudo actualizar la hora de carga para {self._day}")
 
 
 class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
@@ -265,14 +230,13 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
     def __init__(self, account: str, coordinator, day: str):
         super().__init__(coordinator)
         self._account = account
-        self._day = day.upper()  # Ejemplo: "MONDAY"
+        self._day = day.upper()
         self._attr_name = f"SOC de carga ({day.capitalize()})"
         self._attr_unique_id = f"octopus_charge_soc_{account}_{day.lower()}"
-        self._attr_options = [str(i) for i in range(0, 101, 5)]  # 0-100% en pasos de 5
+        self._attr_options = [str(i) for i in range(0, 101, 5)]
         self._current_soc = None
 
     async def async_added_to_hass(self) -> None:
-        """Carga el estado al añadir la entidad."""
         await super().async_added_to_hass()
         self._handle_coordinator_update()
 
@@ -286,61 +250,43 @@ class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        """Devuelve el SOC máximo actual."""
         return str(self._current_soc) if self._current_soc is not None else None
 
     async def async_select_option(self, option: str) -> None:
         """Actualiza el SOC máximo y llama a la API."""
         _LOGGER.info(f"🔄 Actualizando SOC de carga para {self._day}: {option}%")
         await self._update_charge_preferences(max_soc=option)
-        # 🔄 FORZAR actualización del coordinador para que los sensores reflejen el cambio de inmediato
         await self.coordinator.async_request_refresh()
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
         """Llama a la API para actualizar los valores de carga."""
-        
-        # Obtener lista de dispositivos
         devices = self.coordinator.data.get(self._account, {}).get("devices", [])
-    
         if not devices:
             _LOGGER.error("❌ No se encontraron dispositivos en los datos del coordinador.")
             return
-    
-        # Tomar el primer dispositivo (o modificar la lógica si hay más de uno)
+
         device_id = devices[0].get("id") if devices else None
-    
         if not device_id:
             _LOGGER.error("❌ No se encontró un ID de dispositivo válido.")
             return
         
+        current_schedules = devices[0].get("preferences", {}).get("schedules", [])
         schedules = []
         for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
-            schedules.append({
-                "dayOfWeek": day,
-                "time": time if day == self._day else next(
-                    (sched["time"] for sched in self.coordinator.data.get(self._account, {})
-                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
-                     .get("preferences", {}).get("schedules", []) 
-                     if sched["dayOfWeek"] == day),
-                    "08:00"),
-                "max": max_soc if day == self._day else next(
-                    (sched["max"] for sched in self.coordinator.data.get(self._account, {})
-                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
-                     .get("preferences", {}).get("schedules", []) 
-                     if sched["dayOfWeek"] == day),
-                    "80"),
-            })
+            current_schedule_for_day = next((sched for sched in current_schedules if sched["dayOfWeek"] == day), None)
+            
+            day_time = time if day == self._day and time is not None else (current_schedule_for_day['time'] if current_schedule_for_day else "08:00")
+            day_soc = max_soc if day == self._day and max_soc is not None else (current_schedule_for_day['max'] if current_schedule_for_day else "80")
+
+            schedules.append({"dayOfWeek": day, "time": day_time, "max": day_soc})
 
         success = await self.coordinator._api.set_device_preferences(
-            device_id= device_id,
-            mode= "CHARGE",
-            unit= "PERCENTAGE",
-            schedules= schedules,
+            device_id=device_id, mode="CHARGE", unit="PERCENTAGE", schedules=schedules
         )
 
         if success:
-            self._current_soc = int(max_soc)
+            if max_soc is not None:
+                self._current_soc = int(max_soc)
             self.async_write_ha_state()
         else:
             _LOGGER.error(f"❌ No se pudo actualizar el SOC de carga para {self._day}")
-
