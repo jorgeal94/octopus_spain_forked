@@ -74,6 +74,12 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
             _LOGGER.error(f"❌ Excepción en `set_vehicle_charge_preferences`: {e}")
             return False
 
+    async def boost_charge(self, account_number: str):
+    """Función para ser llamada desde el servicio de Home Assistant."""
+    success = await self._api.trigger_boost_charge(account_number)
+    if success:
+        await self.async_request_refresh() # Forzamos la actualización para ver el cambio de estado
+    return success
 
 class OctopusHourlyCoordinator(DataUpdateCoordinator):
     """Coordinator para actualizar datos cada hora."""

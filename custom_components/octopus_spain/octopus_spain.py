@@ -537,3 +537,26 @@ class OctopusSpain:
         response = await client.execute_async(query, {"accountNumber": account_number})
         
         return response.get("data", {}).get("vehicleChargingPreferences", None)
+
+
+    async def trigger_boost_charge(self, account_number: str):
+    """Activa una carga inmediata (boost)."""
+    if not self._token:
+        await self.login()
+
+    mutation = """
+    mutation triggerBoostCharge($input: TriggerBoostChargeInput!) {
+      triggerBoostCharge(input: $input) {
+        __typename
+      }
+    }
+    """
+    variables = {"input": {"accountNumber": account_number}}
+    headers = {"authorization": self._token}
+    client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
+    response = await client.execute_async(mutation, variables)
+
+    if "errors" in response:
+        _LOGGER.error(f"❌ Error al activar la carga inmediata: {response['errors']}")
+        return False
+    return True

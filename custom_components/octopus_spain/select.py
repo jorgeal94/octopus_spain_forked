@@ -210,51 +210,53 @@ class OctopusChargeTime1(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
     
     async def _update_charge_preferences(self, time: str = None, max_soc: str = None) -> None:
-        """Llama a la API para actualizar los valores de carga."""
+    """Llama a la API para actualizar los valores de carga."""
 
-        # Obtener lista de dispositivos
-        devices = self.coordinator.data.get(self._account, {}).get("devices", [])
+    # Obtener lista de dispositivos
+    devices = self.coordinator.data.get(self._account, {}).get("devices", [])
 
-        if not devices:
-            _LOGGER.error("❌ No se encontraron dispositivos en los datos del coordinador.")
-            return
+    if not devices:
+        _LOGGER.error("❌ No se encontraron dispositivos en los datos del coordinador.")
+        return
 
-        # Tomar el primer dispositivo (o modificar la lógica si hay más de uno)
-        device_id = devices[0].get("id") if devices else None
+    # Tomar el primer dispositivo (o modificar la lógica si hay más de uno)
+    device_id = devices[0].get("id") if devices else None
 
-        if not device_id:
-            _LOGGER.error("❌ No se encontró un ID de dispositivo válido.")
-            return
-        schedules = []
-        for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
-            schedules.append({
-                "dayOfWeek": day,
-                "time": time if day == self._day else next(
-                    (sched["time"] for sched in self.coordinator.data.get(self._account, {})
-                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
-                     .get("preferences", {}).get("schedules", []) 
-                     if sched["dayOfWeek"] == day),
-                    "08:00"),
-                "max": max_soc if day == self._day else next(
-                    (sched["max"] for sched in self.coordinator.data.get(self._account, {})
-                     .get("devices", [{}])[0]  # Accedemos al primer dispositivo
-                     .get("preferences", {}).get("schedules", []) 
-                     if sched["dayOfWeek"] == day),
-                    "80"),    
-            })
+    if not device_id:
+        _LOGGER.error("❌ No se encontró un ID de dispositivo válido.")
+        return
 
-        success = await self.coordinator._api.set_device_preferences(
-            device_id= device_id,
-            mode= "CHARGE",
-            unit= "PERCENTAGE",
-            schedules= schedules,
-        )
+    # Obtenemos los horarios actuales para no perderlos
+    current_schedules = self.coordinator.data.get(self._account, {}).get("devices", [{}])[0].get("preferences", {}).get("schedules", [])
 
-        if success:
+    schedules = []
+    for day in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]:
+        # Buscamos el horario actual para este día
+        current_schedule_for_day = next((sched for sched in current_schedules if sched["dayOfWeek"] == day), None)
+
+        # Si estamos actualizando el día actual, usamos los nuevos valores. Si no, los existentes.
+        schedules.append({
+            "dayOfWeek": day,
+            "time": time if day == self._day and time is not None else (current_schedule_for_day["time"] if current_schedule_for_day else "08:00"),
+            "max": max_soc if day == self._day and max_soc is not None else (current_schedule_for_day["max"] if current_schedule_for_day else "80"),
+        })
+
+    success = await self.coordinator._api.set_device_preferences(
+        device_id=device_id,
+        mode="CHARGE",
+        unit="PERCENTAGE",
+        schedules=schedules,
+    )
+
+    if success:
+        # Actualizamos el estado localmente si la llamada a la API fue exitosa
+        if time is not None:
             self._current_time = time
-            self.async_write_ha_state()
-        else:
-            _LOGGER.error(f"❌ No se pudo actualizar la hora de carga para {self._day}")
+        if max_soc is not None:
+            self._current_soc = int(max_soc)
+        self.async_write_ha_state()
+    else:
+        _LOGGER.error(f"❌ No se pudo actualizar las preferencias de carga para {self._day}")
 
 
 class OctopusChargeSoc1(CoordinatorEntity, SelectEntity):
