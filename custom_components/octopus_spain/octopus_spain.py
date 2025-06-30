@@ -425,7 +425,7 @@ class OctopusSpain:
           "Content-Type": "application/json"
       }
 
-      client = GraphqlClient(endpoint="https://api.octopus.energy/v1/graphql", headers=headers)
+      client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
 
       try:
           response = await client.execute_async(mutation, variables)
