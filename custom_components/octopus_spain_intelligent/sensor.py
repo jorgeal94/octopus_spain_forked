@@ -140,6 +140,12 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
             key=f"device_{device['id']}",
             icon="mdi:power-plug",
         )
+        # Crear dispositivo para que otros sensores/selectores se agrupren bajo él
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, device['id'])},
+            "name": device.get('name', f"Dispositivo {device['id']}"),
+            "model": device.get('deviceType', 'unknown'),
+        }
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

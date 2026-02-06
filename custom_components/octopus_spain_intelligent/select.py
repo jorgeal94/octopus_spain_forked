@@ -25,6 +25,7 @@ DAY_TRANSLATION = {
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Configurar selectores para Octopus Spain."""
+    _LOGGER.info("🛠️ Configurando selectores para Octopus Spain")
     intelligentcoordinator = hass.data[DOMAIN].get("intelligent_coordinator")
     if not intelligentcoordinator:
         return
@@ -33,22 +34,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     accounts = intelligentcoordinator.data.keys()
     for account in accounts:
         devices = intelligentcoordinator.data[account].get("devices", [])
+        _LOGGER.info(f"📱 Dispositivos para cuenta {account}: {devices}")
         if devices:
+            device = devices[0]
+            device_id = device.get("id")  # ID del dispositivo de la API
+            device_name = device.get("name", f"Dispositivo {account}")
+            _LOGGER.info(f"✅ Usando device_id={device_id}, device_name={device_name}")
             for day in DAY_TRANSLATION:
-                selects.append(OctopusChargeTimeSelector(account, intelligentcoordinator, day))
-                selects.append(OctopusChargeSocSelector(account, intelligentcoordinator, day))
+                selects.append(OctopusChargeTimeSelector(account, intelligentcoordinator, day, device_id, device_name))
+                selects.append(OctopusChargeSocSelector(account, intelligentcoordinator, day, device_id, device_name))
 
     if selects:
         async_add_entities(selects)
+        _LOGGER.info(f"✅ Se han añadido {len(selects)} selectores")
 
 
 class BaseOctopusChargeSelector(CoordinatorEntity, SelectEntity):
     """Clase base para los selectores de carga."""
 
-    def __init__(self, account: str, coordinator: OctopusIntelligentCoordinator, day: str):
+    def __init__(self, account: str, coordinator: OctopusIntelligentCoordinator, day: str, device_id: str = "", device_name: str = ""):
         super().__init__(coordinator)
         self._account = account
         self._day = day.upper()
+        self._device_id = device_id
+        self._device_name = device_name
+        # Vincular al dispositivo
+        self._attr_device_info = {"identifiers": {(DOMAIN, device_id)}} if device_id else None
 
     def _get_current_schedules(self) -> list[dict[str, Any]]:
         """Obtiene la lista completa de horarios del dispositivo."""
@@ -88,8 +99,8 @@ class BaseOctopusChargeSelector(CoordinatorEntity, SelectEntity):
 class OctopusChargeTimeSelector(BaseOctopusChargeSelector):
     """Selector para la hora de carga diaria."""
 
-    def __init__(self, account: str, coordinator: OctopusIntelligentCoordinator, day: str):
-        super().__init__(account, coordinator, day)
+    def __init__(self, account: str, coordinator: OctopusIntelligentCoordinator, day: str, device_id: str = "", device_name: str = ""):
+        super().__init__(account, coordinator, day, device_id, device_name)
         self._attr_name = f"Hora de carga {DAY_TRANSLATION.get(self._day, self._day)}"
         self._attr_unique_id = f"octopus_charge_time_{account}_{day.lower()}"
         self._attr_options = sorted([f"{h:02d}:{m:02d}" for h in range(24) for m in (0, 30)])
@@ -109,8 +120,8 @@ class OctopusChargeTimeSelector(BaseOctopusChargeSelector):
 class OctopusChargeSocSelector(BaseOctopusChargeSelector):
     """Selector para el SOC máximo diario."""
 
-    def __init__(self, account: str, coordinator: OctopusIntelligentCoordinator, day: str):
-        super().__init__(account, coordinator, day)
+    def __init__(self, account: str, coordinator: OctopusIntelligentCoordinator, day: str, device_id: str = "", device_name: str = ""):
+        super().__init__(account, coordinator, day, device_id, device_name)
         self._attr_name = f"SOC de carga {DAY_TRANSLATION.get(self._day, self._day)}"
         self._attr_unique_id = f"octopus_charge_soc_{account}_{day.lower()}"
         self._attr_options = [str(i) for i in range(20, 101, 5)]
