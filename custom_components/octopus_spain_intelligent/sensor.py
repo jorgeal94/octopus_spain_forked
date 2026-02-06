@@ -309,8 +309,11 @@ class OctopusWallet(CoordinatorEntity, SensorEntity):
             native_unit_of_measurement=CURRENCY_EURO,
             state_class=SensorStateClass.MEASUREMENT
         )
-        # Agrupar bajo el dispositivo de la cuenta
-        self._attr_device_info = {"identifiers": {(DOMAIN, f"account_{account}")}}
+        # Agrupar bajo el dispositivo de la cuenta con nombre visible
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, f"account_{account}")},
+            "name": f"Cuenta {account}",
+        }
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -346,8 +349,11 @@ class OctopusInvoice(CoordinatorEntity, SensorEntity):
             native_unit_of_measurement=CURRENCY_EURO,
             state_class=SensorStateClass.MEASUREMENT
         )
-        # Agrupar bajo el dispositivo de la cuenta
-        self._attr_device_info = {"identifiers": {(DOMAIN, f"account_{account}")}}
+        # Agrupar bajo el dispositivo de la cuenta con nombre visible
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, f"account_{account}")},
+            "name": f"Cuenta {account}",
+        }
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
