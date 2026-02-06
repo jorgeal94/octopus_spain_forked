@@ -58,9 +58,6 @@ class OctopusSpain:
               id
               name
               deviceType
-              integrationDeviceId
-              make
-              model
               ... on SmartFlexVehicle {
                   preferences {
                     schedules {
@@ -76,6 +73,9 @@ class OctopusSpain:
       headers = {"authorization": self._token}
       client = GraphqlClient(endpoint=GRAPH_QL_ENDPOINT, headers=headers)
       response = await client.execute_async(query, {"accountNumber": account_number})
+      _LOGGER.info(f"🔍 Respuesta completa de devices API: {response}")
+      if "errors" in response:
+          _LOGGER.error(f"❌ Errores en la consulta de devices: {response['errors']}")
       return response.get("data", {}).get("devices", None)
 
     async def account(self, account: str):

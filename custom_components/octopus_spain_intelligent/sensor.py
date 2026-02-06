@@ -134,16 +134,8 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
         self._device = device
         self._state = None
         self._attrs: Mapping[str, Any] = {}
-        # Usar nombre del dispositivo si existe, si no usar integrationDeviceId o make/model
-        make = device.get("make")
-        model = device.get("model")
-        make_model = f"{make} {model}".strip() if (make or model) else ""
-        device_display_name = (
-            device.get("name")
-            or device.get("integrationDeviceId")
-            or make_model
-            or "Vehiculo Electrico"
-        )
+        # Usar nombre del dispositivo si existe, si no usar "Vehículo Eléctrico"
+        device_display_name = device.get('name') or "Vehículo Eléctrico"
         self._attr_name = device_display_name
         self._attr_unique_id = f"octopus_device_{device['id']}"
         self.entity_description = SensorEntityDescription(

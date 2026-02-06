@@ -29,11 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             if devices:
                 device = devices[0]
                 device_id = device.get("id")  # ID del dispositivo de la API
-                device_name = (
-                    device.get("name")
-                    or device.get("integrationDeviceId")
-                    or "Vehiculo Electrico"
-                )
+                device_name = device.get("name") or "Vehículo Eléctrico"
                 _LOGGER.info(f"✅ Botón con device_id={device_id}, device_name={device_name}")
                 buttons.append(OctopusBoostChargeButton(account, intelligentcoordinator, device_id, device_name))
 
