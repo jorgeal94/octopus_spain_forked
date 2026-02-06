@@ -8,7 +8,7 @@ from .octopus_spain import OctopusSpain
 _LOGGER = logging.getLogger(__name__)
 
 class OctopusSpainConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Maneja el flujo de configuración de la integración Octopus Spain."""
+    """Maneja el flujo de configuración de la integración Octopus Spain Intelligent."""
 
     async def async_step_user(self, user_input=None):
         """Controla el paso inicial del flujo de configuración."""
@@ -29,7 +29,7 @@ class OctopusSpainConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Si las credenciales son correctas, guardamos la configuración
         return self.async_create_entry(
-            title=f"Octopus Spain 2.0 - {email}",
+            title=f"Octopus Spain Intelligent - {email}",
             data=user_input
         )
 

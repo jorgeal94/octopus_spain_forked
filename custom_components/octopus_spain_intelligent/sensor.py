@@ -43,7 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     sensors = []
 
     # ✅ Usa el coordinador ya creado en `__init__.py`
-    intelligentcoordinator = hass.data["octopus_spain"]["intelligent_coordinator"]
+    intelligentcoordinator = hass.data[DOMAIN]["intelligent_coordinator"]
     await intelligentcoordinator.async_config_entry_first_refresh()
     
     hourly_coordinator = OctopusHourlyCoordinator(hass, email, password)

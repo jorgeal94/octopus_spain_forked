@@ -1,0 +1,11 @@
+{
+  "domain": "octopus_spain_intelligent",
+  "name": "Octopus Spain Intelligent",
+  "codeowners": ["@MiguelAngelLV"],
+  "config_flow": true,
+  "documentation": "https://github.com/MiguelAngelLV/ha-octopus-spain",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/MiguelAngelLV/ha-octopus-spain/issues",
+  "requirements": ["python-graphql-client==0.4.3"],
+  "version": "0.1.0"
+}

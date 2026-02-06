@@ -48,14 +48,14 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[Platform] = [Platform.SENSOR,Platform.SELECT,Platform.BUTTON]
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Octopus Spain component."""
-    _LOGGER.info("Octopus Spain integration setup")
+    """Set up the Octopus Spain Intelligent component."""
+    _LOGGER.info("Octopus Spain Intelligent integration setup")
     hass.data.setdefault(DOMAIN, {})
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Octopus Spain from a config entry."""
-    _LOGGER.info("Setting up Octopus Spain entry")
+    """Set up Octopus Spain Intelligent from a config entry."""
+    _LOGGER.info("Setting up Octopus Spain Intelligent entry")
 
     email = entry.data[CONF_EMAIL]
     password = entry.data[CONF_PASSWORD]
@@ -101,8 +101,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload an Octopus Spain entry."""
-    _LOGGER.info("Unloading Octopus Spain entry")
+    """Unload an Octopus Spain Intelligent entry."""
+    _LOGGER.info("Unloading Octopus Spain Intelligent entry")
     
     if entry.entry_id in hass.data[DOMAIN]:
         hass.data[DOMAIN].pop(entry.entry_id)
