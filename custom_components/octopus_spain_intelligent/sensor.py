@@ -134,7 +134,17 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
         self._device = device
         self._state = None
         self._attrs: Mapping[str, Any] = {}
-        self._attr_name = f"{device['name']} ({account})"
+            # Usar nombre del dispositivo si existe, si no usar integrationDeviceId o make/model
+            make = device.get("make")
+            model = device.get("model")
+            make_model = f"{make} {model}".strip() if (make or model) else ""
+            device_display_name = (
+                device.get("name")
+                or device.get("integrationDeviceId")
+                or make_model
+                or "Vehiculo Electrico"
+            )
+            self._attr_name = device_display_name
         self._attr_unique_id = f"octopus_device_{device['id']}"
         self.entity_description = SensorEntityDescription(
             key=f"device_{device['id']}",
@@ -143,8 +153,8 @@ class OctopusDevice(CoordinatorEntity, SensorEntity):
         # Crear dispositivo para que otros sensores/selectores se agrupren bajo él
         self._attr_device_info = {
             "identifiers": {(DOMAIN, device['id'])},
-            "name": device.get('name', f"Dispositivo {device['id']}"),
-            "model": device.get('deviceType', 'unknown'),
+                "name": device_display_name,
+                "model": device.get('deviceType', 'SmartFlex Vehicle'),
         }
 
     async def async_added_to_hass(self) -> None:

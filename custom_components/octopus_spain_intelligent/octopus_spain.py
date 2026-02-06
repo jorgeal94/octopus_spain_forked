@@ -58,6 +58,9 @@ class OctopusSpain:
               id
               name
               deviceType
+              integrationDeviceId
+              make
+              model
               ... on SmartFlexVehicle {
                   preferences {
                     schedules {

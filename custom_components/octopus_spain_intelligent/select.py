@@ -38,7 +38,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         if devices:
             device = devices[0]
             device_id = device.get("id")  # ID del dispositivo de la API
-            device_name = device.get("name", f"Dispositivo {account}")
+            device_name = (
+                device.get("name")
+                or device.get("integrationDeviceId")
+                or "Vehiculo Electrico"
+            )
             _LOGGER.info(f"✅ Usando device_id={device_id}, device_name={device_name}")
             for day in DAY_TRANSLATION:
                 selects.append(OctopusChargeTimeSelector(account, intelligentcoordinator, day, device_id, device_name))

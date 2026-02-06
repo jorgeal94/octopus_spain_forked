@@ -29,7 +29,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             if devices:
                 device = devices[0]
                 device_id = device.get("id")  # ID del dispositivo de la API
-                device_name = device.get("name", f"Dispositivo {account}")
+                device_name = (
+                    device.get("name")
+                    or device.get("integrationDeviceId")
+                    or "Vehiculo Electrico"
+                )
                 _LOGGER.info(f"✅ Botón con device_id={device_id}, device_name={device_name}")
                 buttons.append(OctopusBoostChargeButton(account, intelligentcoordinator, device_id, device_name))
 
@@ -49,8 +53,8 @@ class OctopusBoostChargeButton(CoordinatorEntity, ButtonEntity):
         self._device_id = device_id
         self._device_name = device_name
         
-        # Nombre que se mostrará en Home Assistant
-        self._attr_name = f"Carga Inmediata ({account})"
+            # Nombre que se mostrará en Home Assistant (sin paréntesis con la cuenta)
+            self._attr_name = "Carga Inmediata"
         
         # ID único para la entidad
         self._attr_unique_id = f"octopus_boost_charge_{account}"
