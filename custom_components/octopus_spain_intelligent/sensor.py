@@ -44,7 +44,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     # ✅ Usa el coordinador ya creado en `__init__.py`
     intelligentcoordinator = hass.data[DOMAIN]["intelligent_coordinator"]
-    await intelligentcoordinator.async_config_entry_first_refresh()
+    # No llamar a async_config_entry_first_refresh() otra vez, ya está inicializado
     
     hourly_coordinator = OctopusHourlyCoordinator(hass, email, password)
     await hourly_coordinator.async_config_entry_first_refresh()
@@ -57,14 +57,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     accounts = intelligentcoordinator.data.keys()
     for account in accounts:  
         _LOGGER.info(f"📡 Creando sensor para la cuenta {account}")
-        sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1)) 
+        # sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1))  # Obsoleto, datos no disponibles
         # sensors.append(OctopusVehicleChargingPreferencesSensor(account, intelligentcoordinator, len(accounts) == 1))  # TODO: Esperar datos de API
         sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', hourly_coordinator, len(accounts) == 1))
         sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', hourly_coordinator, len(accounts) == 1))
         sensors.append(OctopusInvoice(account, hourly_coordinator, len(accounts) == 1))
         devices = intelligentcoordinator.data[account].get("devices", [])
+        _LOGGER.info(f"📱 Dispositivos encontrados para crear sensores: {len(devices)}")
         for device in devices:
-            _LOGGER.info(f"🔧 Creando sensor para el dispositivo {device['name']} ({device['id']})")
+            device_name = device.get('name', 'Sin nombre')
+            _LOGGER.info(f"🔧 Creando sensor para el dispositivo {device_name} (ID: {device.get('id')})")
             sensors.append(OctopusDevice(account, device, intelligentcoordinator))
 
     if sensors:
