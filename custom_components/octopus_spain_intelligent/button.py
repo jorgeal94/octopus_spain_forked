@@ -52,16 +52,16 @@ class OctopusBoostChargeButton(CoordinatorEntity, ButtonEntity):
         self._account = account
         self._device_id = device_id
         self._device_name = device_name
-        
-            # Nombre que se mostrará en Home Assistant (sin paréntesis con la cuenta)
-            self._attr_name = "Carga Inmediata"
-        
+
+        # Nombre que se mostrará en Home Assistant (sin paréntesis con la cuenta)
+        self._attr_name = "Carga Inmediata"
+
         # ID único para la entidad
         self._attr_unique_id = f"octopus_boost_charge_{account}"
-        
+
         # Icono para el botón
         self._attr_icon = "mdi:rocket-launch"
-        
+
         # Vincular al dispositivo
         self._attr_device_info = {"identifiers": {(DOMAIN, device_id)}} if device_id else None
 
