@@ -57,12 +57,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     accounts = intelligentcoordinator.data.keys()
     for account in accounts:  
         _LOGGER.info(f"📡 Creando sensor para la cuenta {account}")
+        
+        # Obtener device_id si existe para agrupar sensores bajo el dispositivo
+        devices = intelligentcoordinator.data[account].get("devices", [])
+        device_id = devices[0].get("id") if devices else None
+        
         # sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1))  # Obsoleto, datos no disponibles
         # sensors.append(OctopusVehicleChargingPreferencesSensor(account, intelligentcoordinator, len(accounts) == 1))  # TODO: Esperar datos de API
-        sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', hourly_coordinator, len(accounts) == 1))
-        sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', hourly_coordinator, len(accounts) == 1))
-        sensors.append(OctopusInvoice(account, hourly_coordinator, len(accounts) == 1))
-        devices = intelligentcoordinator.data[account].get("devices", [])
+        sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', hourly_coordinator, len(accounts) == 1, device_id))
+        sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', hourly_coordinator, len(accounts) == 1, device_id))
+        sensors.append(OctopusInvoice(account, hourly_coordinator, len(accounts) == 1, device_id))
+        
         _LOGGER.info(f"📱 Dispositivos encontrados para crear sensores: {len(devices)}")
         for device in devices:
             device_name = device.get('name', 'Sin nombre')
@@ -290,7 +295,7 @@ from homeassistant.const import (
 
 class OctopusWallet(CoordinatorEntity, SensorEntity):
 
-    def __init__(self, account: str, key: str, name: str, coordinator, single: bool):
+    def __init__(self, account: str, key: str, name: str, coordinator, single: bool, device_id: str = None):
         super().__init__(coordinator=coordinator)
         self._state = None
         self._key = key
@@ -304,6 +309,8 @@ class OctopusWallet(CoordinatorEntity, SensorEntity):
             native_unit_of_measurement=CURRENCY_EURO,
             state_class=SensorStateClass.MEASUREMENT
         )
+        # Agrupar bajo el dispositivo de la cuenta
+        self._attr_device_info = {"identifiers": {(DOMAIN, f"account_{account}")}}
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -326,7 +333,7 @@ class OctopusWallet(CoordinatorEntity, SensorEntity):
 
 class OctopusInvoice(CoordinatorEntity, SensorEntity):
 
-    def __init__(self, account: str, coordinator, single: bool):
+    def __init__(self, account: str, coordinator, single: bool, device_id: str = None):
         super().__init__(coordinator=coordinator)
         self._state = None
         self._account = account
@@ -339,6 +346,8 @@ class OctopusInvoice(CoordinatorEntity, SensorEntity):
             native_unit_of_measurement=CURRENCY_EURO,
             state_class=SensorStateClass.MEASUREMENT
         )
+        # Agrupar bajo el dispositivo de la cuenta
+        self._attr_device_info = {"identifiers": {(DOMAIN, f"account_{account}")}}
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
