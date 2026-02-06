@@ -27,20 +27,13 @@ class OctopusIntelligentCoordinator(DataUpdateCoordinator):
             for account in accounts:
                 account_data = await self._api.account(account)
                 _LOGGER.info(f"📋 Datos de la cuenta {account}: {account_data}")
-                vehicle_prefs = await self._api.get_vehicle_charging_preferences(account)
 
-                if not hasattr(self._api, "registered_krakenflex_device"):
-                    _LOGGER.error(f"❌ `registered_krakenflex_device` no existe en `OctopusSpain`")
-                    krakenflex_device = None
-                else:
-                    krakenflex_device = await self._api.registered_krakenflex_device(account)
-                    _LOGGER.info(f"✅ Datos del Krakenflex Device: {krakenflex_device}")
-                    devices = await self._api.devices(account)
+                devices = await self._api.devices(account) or []
+                _LOGGER.info(f"📱 Dispositivos obtenidos: {len(devices)} dispositivo(s)")
+
                 self._data[account] = {
                     **account_data,
-                    "krakenflex_device": krakenflex_device,
-                    "devices" : devices,
-                    "vehicle_charging_prefs": vehicle_prefs
+                    "devices": devices,
                 }
 
             _LOGGER.info(f"📊 Datos obtenidos y almacenados: {self._data}")

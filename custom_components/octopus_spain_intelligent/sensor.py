@@ -58,7 +58,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     for account in accounts:  
         _LOGGER.info(f"📡 Creando sensor para la cuenta {account}")
         sensors.append(OctopusKrakenflexDevice(account, intelligentcoordinator, len(accounts) == 1)) 
-        sensors.append(OctopusVehicleChargingPreferencesSensor(account, intelligentcoordinator, len(accounts) == 1)) 
+        # sensors.append(OctopusVehicleChargingPreferencesSensor(account, intelligentcoordinator, len(accounts) == 1))  # TODO: Esperar datos de API
         sensors.append(OctopusWallet(account, 'solar_wallet', 'Solar Wallet', hourly_coordinator, len(accounts) == 1))
         sensors.append(OctopusWallet(account, 'octopus_credit', 'Octopus Credit', hourly_coordinator, len(accounts) == 1))
         sensors.append(OctopusInvoice(account, hourly_coordinator, len(accounts) == 1))
